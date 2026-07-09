@@ -23,10 +23,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<?>> handleValidation(MethodArgumentNotValidException ex) {
         Map<String, String> fieldErrors = ex.getBindingResult().getFieldErrors().stream()
-                .collect(Collectors.toMap(FieldError::getField, f -> f.getDefaultMessage() != null ? f.getDefaultMessage() : "invalid"));
-        var body = ApiResponse.error("VALIDATION_ERROR", "Validation failed");
-        // Wrap fieldErrors into the error — extend ErrorBody if needed later
-        return ResponseEntity.badRequest().body(body);
+                .collect(Collectors.toMap(
+                        FieldError::getField,
+                        f -> f.getDefaultMessage() != null ? f.getDefaultMessage() : "invalid",
+                        (a, b) -> a));
+        return ResponseEntity.badRequest()
+                .body(ApiResponse.error("VALIDATION_ERROR", "驗證失敗", fieldErrors));
     }
 
     @ExceptionHandler(Exception.class)
