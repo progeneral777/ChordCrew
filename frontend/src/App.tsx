@@ -5,6 +5,7 @@ import RegisterPage from './features/auth/RegisterPage'
 import BandListPage from './features/bands/BandListPage'
 import BandDetailPage from './features/bands/BandDetailPage'
 import InviteAcceptPage from './features/bands/InviteAcceptPage'
+import SongEditorPage from './features/editor/SongEditorPage'
 import RequireAuth from './components/RequireAuth'
 import { useAuthStore } from './stores/authStore'
 
@@ -33,6 +34,14 @@ export default function App() {
           element={
             <RequireAuth>
               <BandDetailPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/songs/:id"
+          element={
+            <RequireAuth>
+              <SongEditorPage />
             </RequireAuth>
           }
         />

@@ -31,6 +31,7 @@ public class BandService {
     private final BandMemberRepository memberRepository;
     private final BandInviteRepository inviteRepository;
     private final UserRepository userRepository;
+    private final BandAccess bandAccess;
     private final String frontendBaseUrl;
     private final SecureRandom secureRandom = new SecureRandom();
 
@@ -38,11 +39,13 @@ public class BandService {
                        BandMemberRepository memberRepository,
                        BandInviteRepository inviteRepository,
                        UserRepository userRepository,
+                       BandAccess bandAccess,
                        @Value("${app.frontend-base-url}") String frontendBaseUrl) {
         this.bandRepository = bandRepository;
         this.memberRepository = memberRepository;
         this.inviteRepository = inviteRepository;
         this.userRepository = userRepository;
+        this.bandAccess = bandAccess;
         this.frontendBaseUrl = frontendBaseUrl;
     }
 
@@ -176,13 +179,10 @@ public class BandService {
     }
 
     private BandMember requireMember(UUID bandId, UUID userId) {
-        return memberRepository.findByBandIdAndUserId(bandId, userId)
-                .orElseThrow(() -> AppException.notFound("NOT_FOUND", "找不到樂團或你不是成員"));
+        return bandAccess.requireMember(bandId, userId);
     }
 
     private void requireOwner(UUID bandId, UUID userId) {
-        if (requireMember(bandId, userId).getRole() != Role.OWNER) {
-            throw AppException.forbidden("只有樂團擁有者可以執行此操作");
-        }
+        bandAccess.requireRole(bandId, userId, Role.OWNER);
     }
 }
