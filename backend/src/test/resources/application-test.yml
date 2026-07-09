@@ -12,6 +12,7 @@ spring:
     enabled: false
 
 app:
+  frontend-base-url: http://localhost:5173
   jwt:
     secret: test-secret-key-at-least-256-bits-for-hs256-algorithm
     access-token-expiry-ms: 7200000

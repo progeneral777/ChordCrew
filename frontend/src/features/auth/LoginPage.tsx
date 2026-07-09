@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../stores/authStore'
 
 function errorMessage(err: unknown): string {
@@ -18,8 +18,10 @@ export default function LoginPage() {
   const login = useAuthStore((s) => s.login)
   const status = useAuthStore((s) => s.status)
   const navigate = useNavigate()
+  const location = useLocation()
+  const from = (location.state as { from?: string } | null)?.from ?? '/'
 
-  if (status === 'authed') return <Navigate to="/" replace />
+  if (status === 'authed') return <Navigate to={from} replace />
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -27,7 +29,7 @@ export default function LoginPage() {
     setSubmitting(true)
     try {
       await login(email, password)
-      navigate('/')
+      navigate(from, { replace: true })
     } catch (err) {
       setError(errorMessage(err))
     } finally {
