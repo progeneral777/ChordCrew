@@ -8,7 +8,7 @@
 # Start DB
 docker compose up -d db
 
-# Backend (requires Java 21)
+# Backend (requires Java 21; local dev listens on :8090)
 cd backend && ./gradlew bootRun
 
 # Frontend (new terminal)

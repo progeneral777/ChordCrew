@@ -151,6 +151,16 @@ export default function SongsPanel({ bandId, myRole }: SongsPanelProps) {
                     {t}
                   </span>
                 ))}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    navigate(`/songs/${song.id}/view`)
+                  }}
+                  className="text-sm text-blue-600 hover:underline"
+                >
+                  檢視
+                </button>
                 {canEdit && (
                   <button
                     type="button"

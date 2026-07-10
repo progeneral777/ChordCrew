@@ -6,6 +6,8 @@ import BandListPage from './features/bands/BandListPage'
 import BandDetailPage from './features/bands/BandDetailPage'
 import InviteAcceptPage from './features/bands/InviteAcceptPage'
 import SongEditorPage from './features/editor/SongEditorPage'
+import SongViewerPage from './features/viewer/SongViewerPage'
+import ErrorBoundary from './components/ErrorBoundary'
 import RequireAuth from './components/RequireAuth'
 import { useAuthStore } from './stores/authStore'
 
@@ -17,8 +19,9 @@ export default function App() {
   }, [init])
 
   return (
-    <BrowserRouter>
-      <Routes>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route
@@ -46,6 +49,14 @@ export default function App() {
           }
         />
         <Route
+          path="/songs/:id/view"
+          element={
+            <RequireAuth>
+              <SongViewerPage />
+            </RequireAuth>
+          }
+        />
+        <Route
           path="/invites/:token"
           element={
             <RequireAuth>
@@ -54,7 +65,8 @@ export default function App() {
           }
         />
         <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+        </Routes>
+      </BrowserRouter>
+    </ErrorBoundary>
   )
 }

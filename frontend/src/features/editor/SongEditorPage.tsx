@@ -258,6 +258,9 @@ export default function SongEditorPage() {
                 </span>
               ))}
             </div>
+            <Link to={`/songs/${song.id}/view`} className="text-sm text-blue-600 hover:underline">
+              檢視模式
+            </Link>
             <button
               type="button"
               onClick={() => setShowVersions(true)}
