@@ -5,6 +5,7 @@ import { songsApi, type SongDetail } from '../../api/songs'
 import { transposeKey } from '../../lib/chord'
 import AppLayout from '../../components/AppLayout'
 import SheetPreview from './SheetPreview'
+import VersionSidebar from './VersionSidebar'
 
 const ALL_KEYS = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B']
 
@@ -32,6 +33,9 @@ export default function SongEditorPage() {
   // 顯示層移調
   const [semitones, setSemitones] = useState(0)
   const [capo, setCapo] = useState(0)
+
+  // 版本側欄
+  const [showVersions, setShowVersions] = useState(false)
 
   // metadata 表單
   const [showMeta, setShowMeta] = useState(false)
@@ -180,15 +184,24 @@ export default function SongEditorPage() {
                 .join(' · ')}
             </p>
           </div>
-          {canEdit && (
+          <div className="flex items-center gap-4">
             <button
               type="button"
-              onClick={() => setShowMeta((v) => !v)}
+              onClick={() => setShowVersions(true)}
               className="text-sm text-blue-600 hover:underline"
             >
-              {showMeta ? '收合' : '編輯歌曲資訊'}
+              版本歷史
             </button>
-          )}
+            {canEdit && (
+              <button
+                type="button"
+                onClick={() => setShowMeta((v) => !v)}
+                className="text-sm text-blue-600 hover:underline"
+              >
+                {showMeta ? '收合' : '編輯歌曲資訊'}
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -411,6 +424,19 @@ export default function SongEditorPage() {
           </div>
         </div>
       </div>
+
+      {showVersions && id && (
+        <VersionSidebar
+          songId={id}
+          canEdit={canEdit}
+          currentContent={content}
+          onClose={() => setShowVersions(false)}
+          onRestored={(s) => {
+            applySong(s)
+            setNotice('已還原到所選版本')
+          }}
+        />
+      )}
     </AppLayout>
   )
 }
