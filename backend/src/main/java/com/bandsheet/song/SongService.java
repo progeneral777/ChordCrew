@@ -9,6 +9,8 @@ import com.bandsheet.song.dto.SongDtos.CreateSongRequest;
 import com.bandsheet.song.dto.SongDtos.SongDetail;
 import com.bandsheet.song.dto.SongDtos.SongSummary;
 import com.bandsheet.song.dto.SongDtos.UpdateSongRequest;
+import com.bandsheet.common.event.SongContentReplaced;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,10 +23,13 @@ public class SongService {
 
     private final SongRepository songRepository;
     private final BandAccess bandAccess;
+    private final ApplicationEventPublisher events;
 
-    public SongService(SongRepository songRepository, BandAccess bandAccess) {
+    public SongService(SongRepository songRepository, BandAccess bandAccess,
+                       ApplicationEventPublisher events) {
         this.songRepository = songRepository;
         this.bandAccess = bandAccess;
+        this.events = events;
     }
 
     @Transactional(readOnly = true)
@@ -91,6 +96,7 @@ public class SongService {
         }
         song.setContent(content);
         song.bumpRevision();
+        events.publishEvent(new SongContentReplaced(songId, content, song.getRevision()));
         return new ContentUpdateResult(false, content, song.getRevision());
     }
 
@@ -103,6 +109,7 @@ public class SongService {
             song.setOriginalKey(ChordUtil.transposeKey(song.getOriginalKey(), semitones));
         }
         song.bumpRevision();
+        events.publishEvent(new SongContentReplaced(songId, song.getContent(), song.getRevision()));
         return toDetail(song, me.getRole());
     }
 

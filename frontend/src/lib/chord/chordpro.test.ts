@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { parseChordPro, transposeContent } from './chordpro'
+import { applySectionUpdate, parseChordPro, splitSections, transposeContent } from './chordpro'
 
 const SAMPLE = `{title: 小情歌}
 {key: C}
@@ -56,6 +56,38 @@ describe('parseChordPro', () => {
     const sheet3 = parseChordPro('[Verse]\n[C]')
     expect(sheet3.sections).toHaveLength(1)
     expect(sheet3.sections[0].lines[0].type).toBe('lyric')
+  })
+})
+
+describe('splitSections / applySectionUpdate', () => {
+  test('依段落標題切分,join 可無損還原', () => {
+    const sections = splitSections(SAMPLE)
+    expect(sections).toHaveLength(4) // metadata 前導 + Intro + Verse 1 + Chorus
+    expect(sections[0]).toContain('{title: 小情歌}')
+    expect(sections[1].startsWith('[Intro]')).toBe(true)
+    expect(sections[3].startsWith('[Chorus]')).toBe(true)
+    expect(sections.join('\n')).toBe(SAMPLE)
+  })
+
+  test('無前導內容時第一段直接是標題段', () => {
+    const sections = splitSections('[Verse]\n歌詞')
+    expect(sections).toEqual(['[Verse]\n歌詞'])
+  })
+
+  test('空字串是單一空段落', () => {
+    expect(splitSections('')).toEqual([''])
+  })
+
+  test('applySectionUpdate 取代指定段落', () => {
+    const updated = applySectionUpdate(SAMPLE, 2, '[Verse 1]\n改寫後的[C]歌詞')
+    expect(updated).toContain('改寫後的[C]歌詞')
+    expect(updated).toContain('[Chorus]') // 其他段落不動
+    expect(updated).not.toContain('人們心腸的曲折')
+  })
+
+  test('index 超出範圍回 null', () => {
+    expect(applySectionUpdate(SAMPLE, 99, 'x')).toBeNull()
+    expect(applySectionUpdate(SAMPLE, -1, 'x')).toBeNull()
   })
 })
 

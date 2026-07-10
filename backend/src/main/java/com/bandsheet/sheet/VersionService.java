@@ -12,6 +12,8 @@ import com.bandsheet.sheet.dto.VersionDtos.VersionSummary;
 import com.bandsheet.song.Song;
 import com.bandsheet.song.SongRepository;
 import com.bandsheet.song.dto.SongDtos.SongDetail;
+import com.bandsheet.common.event.SongContentReplaced;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,15 +30,18 @@ public class VersionService {
     private final SongRepository songRepository;
     private final UserRepository userRepository;
     private final BandAccess bandAccess;
+    private final ApplicationEventPublisher events;
 
     public VersionService(SongVersionRepository versionRepository,
                           SongRepository songRepository,
                           UserRepository userRepository,
-                          BandAccess bandAccess) {
+                          BandAccess bandAccess,
+                          ApplicationEventPublisher events) {
         this.versionRepository = versionRepository;
         this.songRepository = songRepository;
         this.userRepository = userRepository;
         this.bandAccess = bandAccess;
+        this.events = events;
     }
 
     @Transactional(readOnly = true)
@@ -87,6 +92,7 @@ public class VersionService {
 
         song.setContent(version.getContent());
         song.bumpRevision();
+        events.publishEvent(new SongContentReplaced(songId, song.getContent(), song.getRevision()));
 
         return new SongDetail(song.getId(), song.getBandId(), song.getTitle(), song.getArtist(),
                 song.getOriginalKey(), song.getBpm(), song.getTimeSignature(), song.getTags(),

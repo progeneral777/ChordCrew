@@ -10,6 +10,8 @@ export {
 export {
   parseChordPro,
   transposeContent,
+  splitSections,
+  applySectionUpdate,
   type ParsedSheet,
   type Section,
   type SheetLine,

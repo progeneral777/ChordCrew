@@ -4,6 +4,9 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  define: {
+    global: 'window', // sockjs-client 需要
+  },
   server: {
     proxy: {
       '/api': 'http://localhost:8090',

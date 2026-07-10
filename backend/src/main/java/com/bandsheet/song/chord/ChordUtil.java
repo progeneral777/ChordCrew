@@ -166,4 +166,34 @@ public final class ChordUtil {
         Matcher m = SECTION_PATTERN.matcher(trimmedLine);
         return m.matches() && parse(m.group(1)) == null;
     }
+
+    /**
+     * 依段落標題行把全文切成段落字串(即時共編的鎖單位,前端 TS 有同規則實作)。
+     * 段落 0 為第一個標題前的前導內容(若無前導行則第一段直接是標題段);
+     * String.join("\n", sections) 可無損還原全文。
+     */
+    public static java.util.List<String> splitSections(String content) {
+        String[] lines = content.split("\n", -1);
+        java.util.List<java.util.List<String>> chunks = new java.util.ArrayList<>();
+        java.util.List<String> current = new java.util.ArrayList<>();
+        for (String line : lines) {
+            if (isSectionHeader(line.trim())) {
+                if (!chunks.isEmpty() || !current.isEmpty()) chunks.add(current);
+                current = new java.util.ArrayList<>();
+                current.add(line);
+            } else {
+                current.add(line);
+            }
+        }
+        chunks.add(current);
+        return chunks.stream().map(c -> String.join("\n", c)).toList();
+    }
+
+    /** 以新內容取代第 sectionIndex 段;index 超出範圍回 null。 */
+    public static String applySectionUpdate(String content, int sectionIndex, String newSection) {
+        java.util.List<String> sections = new java.util.ArrayList<>(splitSections(content));
+        if (sectionIndex < 0 || sectionIndex >= sections.size()) return null;
+        sections.set(sectionIndex, newSection);
+        return String.join("\n", sections);
+    }
 }

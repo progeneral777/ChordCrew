@@ -47,7 +47,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/health",
                         "/api/auth/register", "/api/auth/login",
-                        "/api/auth/refresh", "/api/auth/logout").permitAll()
+                        "/api/auth/refresh", "/api/auth/logout",
+                        "/ws/**").permitAll()  // WebSocket 握手;STOMP CONNECT 另以 JWT 驗證
                 .anyRequest().authenticated()
             )
             .exceptionHandling(e -> e

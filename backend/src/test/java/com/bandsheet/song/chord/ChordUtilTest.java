@@ -149,4 +149,34 @@ class ChordUtilTest {
     void preservesTrailingEmptyLines() {
         assertThat(ChordUtil.transposeContent("[C]\n", 2)).isEqualTo("[D]\n");
     }
+
+    // --- splitSections / applySectionUpdate ---
+
+    @Test
+    void splitsSectionsAndJoinsBackLosslessly() {
+        var sections = ChordUtil.splitSections(SAMPLE);
+        assertThat(sections).hasSize(3); // metadata 前導 + Intro + Verse 1
+        assertThat(sections.get(0)).contains("{title: 小情歌}");
+        assertThat(sections.get(1)).startsWith("[Intro]");
+        assertThat(String.join("\n", sections)).isEqualTo(SAMPLE);
+    }
+
+    @Test
+    void noPreambleMeansFirstSectionIsHeaderSection() {
+        assertThat(ChordUtil.splitSections("[Verse]\n歌詞")).containsExactly("[Verse]\n歌詞");
+        assertThat(ChordUtil.splitSections("")).containsExactly("");
+    }
+
+    @Test
+    void appliesSectionUpdate() {
+        String updated = ChordUtil.applySectionUpdate(SAMPLE, 2, "[Verse 1]\n改寫後的[C]歌詞");
+        assertThat(updated).contains("改寫後的[C]歌詞").contains("[Intro]");
+        assertThat(updated).doesNotContain("人們心腸的曲折");
+    }
+
+    @Test
+    void applyOutOfRangeReturnsNull() {
+        assertThat(ChordUtil.applySectionUpdate(SAMPLE, 99, "x")).isNull();
+        assertThat(ChordUtil.applySectionUpdate(SAMPLE, -1, "x")).isNull();
+    }
 }

@@ -1,43 +1,44 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { apiErrorMessage } from '../../api/bands'
 import { songsApi, type SongDetail } from '../../api/songs'
-import { transposeKey } from '../../lib/chord'
+import { applySectionUpdate, splitSections, transposeKey } from '../../lib/chord'
+import { useAuthStore } from '../../stores/authStore'
+import { useCollabStore } from '../../stores/collabStore'
 import AppLayout from '../../components/AppLayout'
 import SheetPreview from './SheetPreview'
+import SectionBlock from './SectionBlock'
 import VersionSidebar from './VersionSidebar'
 
 const ALL_KEYS = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B']
+const IDLE_MS = 3000 // 3 秒 idle 即廣播更新
 
 function normalizeShift(n: number): number {
-  // 收斂到 -5..+6,選最短移調方向
   const m = ((n % 12) + 12) % 12
   return m > 6 ? m - 12 : m
 }
 
 export default function SongEditorPage() {
   const { id } = useParams<{ id: string }>()
+  const myUserId = useAuthStore((s) => s.user?.id)
 
   const [song, setSong] = useState<SongDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
 
-  // 編輯中的內容
-  const [content, setContent] = useState('')
-  const [revision, setRevision] = useState(0)
-  const [dirty, setDirty] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [conflict, setConflict] = useState<{ content: string; revision: number } | null>(null)
+  // 段落式內容(即時共編的單位)
+  const [sections, setSections] = useState<string[]>([''])
+  const sectionsRef = useRef<string[]>([''])
+  const revisionRef = useRef(0)
+  const dirtySection = useRef<number | null>(null)
+  const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // 顯示層移調
   const [semitones, setSemitones] = useState(0)
   const [capo, setCapo] = useState(0)
 
-  // 版本側欄
   const [showVersions, setShowVersions] = useState(false)
-
-  // metadata 表單
   const [showMeta, setShowMeta] = useState(false)
   const [metaForm, setMetaForm] = useState({
     title: '',
@@ -48,22 +49,40 @@ export default function SongEditorPage() {
     tags: '',
   })
 
-  const applySong = useCallback((s: SongDetail) => {
-    setSong(s)
-    setContent(s.content ?? '')
-    setRevision(s.revision)
-    setDirty(false)
-    setConflict(null)
-    setMetaForm({
-      title: s.title,
-      artist: s.artist ?? '',
-      originalKey: s.originalKey ?? '',
-      bpm: s.bpm != null ? String(s.bpm) : '',
-      timeSignature: s.timeSignature ?? '',
-      tags: (s.tags ?? []).join(', '),
-    })
+  const wsStatus = useCollabStore((s) => s.status)
+  const users = useCollabStore((s) => s.users)
+  const locks = useCollabStore((s) => s.locks)
+  const myLocks = useCollabStore((s) => s.myLocks)
+  const collabConnect = useCollabStore((s) => s.connect)
+  const collabDisconnect = useCollabStore((s) => s.disconnect)
+  const collabLock = useCollabStore((s) => s.lock)
+  const collabUnlock = useCollabStore((s) => s.unlock)
+  const collabSend = useCollabStore((s) => s.sendUpdate)
+
+  const setAllSections = useCallback((content: string, revision: number) => {
+    const split = splitSections(content)
+    setSections(split)
+    sectionsRef.current = split
+    revisionRef.current = revision
   }, [])
 
+  const applySong = useCallback(
+    (s: SongDetail) => {
+      setSong(s)
+      setAllSections(s.content ?? '', s.revision)
+      setMetaForm({
+        title: s.title,
+        artist: s.artist ?? '',
+        originalKey: s.originalKey ?? '',
+        bpm: s.bpm != null ? String(s.bpm) : '',
+        timeSignature: s.timeSignature ?? '',
+        tags: (s.tags ?? []).join(', '),
+      })
+    },
+    [setAllSections]
+  )
+
+  // 載入歌曲
   useEffect(() => {
     if (!id) return
     songsApi
@@ -73,39 +92,79 @@ export default function SongEditorPage() {
       .finally(() => setLoading(false))
   }, [id, applySong])
 
+  // 建立 WebSocket 連線
+  useEffect(() => {
+    if (!id || !song || !myUserId) return
+    collabConnect(id, myUserId, {
+      onSectionUpdated: (sectionIndex, content, revision) => {
+        revisionRef.current = revision
+        if (sectionIndex < 0) return // 自己持鎖段落的回音,只更新 revision
+        const updated = applySectionUpdate(sectionsRef.current.join('\n'), sectionIndex, content)
+        if (updated !== null) {
+          const split = splitSections(updated)
+          setSections(split)
+          sectionsRef.current = split
+        }
+      },
+      onSync: (content, revision) => {
+        setAllSections(content, revision)
+        setNotice('內容已同步為最新版本')
+      },
+      onReconnected: () => {
+        // 重連後重新拉最新全文
+        songsApi
+          .get(id)
+          .then((res) => {
+            setAllSections(res.data.data.song.content ?? '', res.data.data.song.revision)
+          })
+          .catch(() => {})
+      },
+    })
+    return () => collabDisconnect()
+    // song 首次載入後建立一次連線即可
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, song?.id, myUserId])
+
   const canEdit = song?.myRole === 'OWNER' || song?.myRole === 'EDITOR'
+  const editable = canEdit && wsStatus === 'connected'
+  const joined = useMemo(() => sections.join('\n'), [sections])
 
-  const onSaveContent = async () => {
-    if (!id) return
-    setSaving(true)
-    setError('')
-    setNotice('')
-    try {
-      const res = await songsApi.updateContent(id, content, revision)
-      setRevision(res.data.data.revision)
-      setDirty(false)
-      setNotice('已儲存')
-    } catch (err: unknown) {
-      const resp = (err as { response?: { status?: number; data?: { data?: { content: string; revision: number } } } })
-        .response
-      if (resp?.status === 409 && resp.data?.data) {
-        setConflict(resp.data.data)
-      } else {
-        setError(apiErrorMessage(err, '儲存失敗'))
-      }
-    } finally {
-      setSaving(false)
+  // --- 段落編輯流程:focus 取鎖 → 輸入(3 秒 idle 廣播)→ blur 送出+解鎖 ---
+
+  const flushUpdate = useCallback(() => {
+    const idx = dirtySection.current
+    if (idx === null) return
+    dirtySection.current = null
+    if (idleTimer.current) {
+      clearTimeout(idleTimer.current)
+      idleTimer.current = null
     }
+    collabSend(idx, sectionsRef.current[idx] ?? '', revisionRef.current)
+  }, [collabSend])
+
+  const onSectionFocus = (idx: number) => {
+    if (!editable) return
+    // 換段落時先送出上一段
+    if (dirtySection.current !== null && dirtySection.current !== idx) flushUpdate()
+    collabLock(idx)
   }
 
-  const onAcceptLatest = () => {
-    if (!conflict) return
-    setContent(conflict.content)
-    setRevision(conflict.revision)
-    setDirty(false)
-    setConflict(null)
-    setNotice('已載入最新內容')
+  const onSectionChange = (idx: number, value: string) => {
+    const next = [...sectionsRef.current]
+    next[idx] = value
+    setSections(next)
+    sectionsRef.current = next
+    dirtySection.current = idx
+    if (idleTimer.current) clearTimeout(idleTimer.current)
+    idleTimer.current = setTimeout(flushUpdate, IDLE_MS)
   }
+
+  const onSectionBlur = (idx: number) => {
+    flushUpdate()
+    collabUnlock(idx)
+  }
+
+  // --- metadata / 移調(REST,與 Phase 4 相同)---
 
   const onSaveMetadata = async (e: FormEvent) => {
     e.preventDefault()
@@ -185,6 +244,20 @@ export default function SongEditorPage() {
             </p>
           </div>
           <div className="flex items-center gap-4">
+            {/* 在線頭像列 */}
+            <div className="flex -space-x-1.5">
+              {users.map((u) => (
+                <span
+                  key={u.userId}
+                  title={u.displayName}
+                  className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold text-white ring-2 ring-white ${
+                    u.userId === myUserId ? 'bg-blue-600' : 'bg-emerald-500'
+                  }`}
+                >
+                  {u.displayName.charAt(0).toUpperCase()}
+                </span>
+              ))}
+            </div>
             <button
               type="button"
               onClick={() => setShowVersions(true)}
@@ -204,6 +277,13 @@ export default function SongEditorPage() {
           </div>
         </div>
       </div>
+
+      {/* 連線狀態 */}
+      {wsStatus === 'disconnected' && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded p-2.5 mb-3 text-sm text-yellow-800">
+          連線中斷,重新連線中… 編輯已暫停
+        </div>
+      )}
 
       {/* metadata 表單 */}
       {showMeta && canEdit && (
@@ -358,50 +438,28 @@ export default function SongEditorPage() {
         )}
       </div>
 
-      {/* 訊息列 */}
       {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
       {notice && <p className="text-sm text-green-600 mb-3">{notice}</p>}
-      {conflict && (
-        <div className="bg-orange-50 border border-orange-200 rounded p-3 mb-3 text-sm flex items-center justify-between gap-4">
-          <span className="text-orange-800">內容已被其他人更新(版本衝突)。</span>
-          <button
-            type="button"
-            onClick={onAcceptLatest}
-            className="text-orange-700 font-medium hover:underline shrink-0"
-          >
-            載入最新內容(捨棄我的修改)
-          </button>
-        </div>
-      )}
 
-      {/* 分割檢視 */}
+      {/* 分割檢視:左段落編輯、右預覽 */}
       <div className="grid lg:grid-cols-2 gap-4">
-        <div className="flex flex-col">
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-sm font-medium text-gray-700">ChordPro 原始碼</span>
-            {canEdit && (
-              <button
-                type="button"
-                onClick={() => void onSaveContent()}
-                disabled={saving || !dirty}
-                className="bg-blue-600 text-white rounded px-4 py-1 text-sm font-medium hover:bg-blue-700 disabled:opacity-40"
-              >
-                {saving ? '儲存中…' : dirty ? '儲存' : '已儲存'}
-              </button>
-            )}
-          </div>
-          <textarea
-            value={content}
-            readOnly={!canEdit}
-            onChange={(e) => {
-              setContent(e.target.value)
-              setDirty(true)
-              setNotice('')
-            }}
-            spellCheck={false}
-            placeholder={'[Verse]\n歌詞中放[C]和弦錨點,像[G]這樣\n\n| C | G | Am | F |'}
-            className="flex-1 min-h-[28rem] font-mono text-sm border border-gray-300 rounded-lg p-3 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
-          />
+        <div className="flex flex-col gap-3">
+          <span className="text-sm font-medium text-gray-700">
+            ChordPro 原始碼(依段落編輯,他人編輯中的段落唯讀)
+          </span>
+          {sections.map((sectionContent, idx) => (
+            <SectionBlock
+              key={idx}
+              index={idx}
+              content={sectionContent}
+              lockedBy={locks[idx] ?? null}
+              isMine={myLocks.has(idx)}
+              editable={editable}
+              onFocus={() => onSectionFocus(idx)}
+              onChange={(value) => onSectionChange(idx, value)}
+              onBlur={() => onSectionBlur(idx)}
+            />
+          ))}
         </div>
         <div>
           <span className="text-sm font-medium text-gray-700 block mb-1.5">
@@ -416,7 +474,7 @@ export default function SongEditorPage() {
           </span>
           <div className="bg-white border border-gray-200 rounded-lg p-4 min-h-[28rem] overflow-auto">
             <SheetPreview
-              content={content}
+              content={joined}
               semitones={semitones}
               capo={capo}
               originalKey={song.originalKey}
@@ -429,7 +487,7 @@ export default function SongEditorPage() {
         <VersionSidebar
           songId={id}
           canEdit={canEdit}
-          currentContent={content}
+          currentContent={joined}
           onClose={() => setShowVersions(false)}
           onRestored={(s) => {
             applySong(s)

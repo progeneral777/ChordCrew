@@ -112,6 +112,39 @@ export function parseChordPro(content: string): ParsedSheet {
   return { metadata, sections }
 }
 
+/**
+ * 依段落標題行把全文切成段落字串(即時共編的鎖單位,後端 Java 有同規則實作)。
+ * 段落 0 為第一個標題前的前導內容(若無前導行則第一段直接是標題段);
+ * 用 join('\n') 可無損還原全文。
+ */
+export function splitSections(content: string): string[] {
+  const lines = content.split('\n')
+  const chunks: string[][] = []
+  let current: string[] = []
+  for (const line of lines) {
+    if (asSectionName(line.trim()) !== null) {
+      if (chunks.length > 0 || current.length > 0) chunks.push(current)
+      current = [line]
+    } else {
+      current.push(line)
+    }
+  }
+  chunks.push(current)
+  return chunks.map((c) => c.join('\n'))
+}
+
+/** 以新內容取代第 sectionIndex 段;index 超出範圍回 null。 */
+export function applySectionUpdate(
+  content: string,
+  sectionIndex: number,
+  newSection: string
+): string | null {
+  const sections = splitSections(content)
+  if (sectionIndex < 0 || sectionIndex >= sections.length) return null
+  sections[sectionIndex] = newSection
+  return sections.join('\n')
+}
+
 /** 整份 ChordPro 移調:改寫所有和弦錨點、| 進行行與 {key:} metadata,其他內容不動。 */
 export function transposeContent(content: string, semitones: number): string {
   const keyMatch = /\{\s*key\s*:\s*([^}]+?)\s*\}/.exec(content)
