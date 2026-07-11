@@ -31,11 +31,19 @@ services:
     ports:
       # host 8090(本機 8080 常被占用);容器間仍走 backend:8080
       - "8090:8080"
+    healthcheck:
+      # JRE image 沒有 curl,用 bash /dev/tcp 檢查埠是否就緒(Tomcat 就緒才開埠)
+      test: ["CMD-SHELL", "bash -c ':> /dev/tcp/127.0.0.1/8080' || exit 1"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
 
   frontend:
     build: ./frontend
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     ports:
       - "5173:80"
 
