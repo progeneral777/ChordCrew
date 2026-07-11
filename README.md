@@ -2,10 +2,18 @@
 
 即時共編和弦進行譜與歌詞譜 — Real-time collaborative chord sheet editor for bands.
 
-## Quick Start
+## Quick Start(全部跑在 Docker)
 
 ```bash
-# Start DB
+docker compose up -d --build
+# → http://localhost:5173(前端,nginx 代理 /api 與 /ws 到後端)
+# → http://localhost:8090/api/health(後端直連)
+```
+
+## 本機開發(前後端熱重載)
+
+```bash
+# Start DB only
 docker compose up -d db
 
 # Backend (requires Java 21; local dev listens on :8090)
@@ -34,6 +42,6 @@ cd backend && ./gradlew test
 # Frontend tests
 cd frontend && npm run test
 
-# Full stack via Docker (after building images)
-docker compose --profile full up
+# Full stack via Docker
+docker compose up -d --build
 ```
