@@ -38,6 +38,9 @@ export default function SongEditorPage() {
   const [semitones, setSemitones] = useState(0)
   const [capo, setCapo] = useState(0)
 
+  // 是否有尚未同步的編輯(供儲存按鈕/狀態指示用)
+  const [hasPendingEdit, setHasPendingEdit] = useState(false)
+
   const [showVersions, setShowVersions] = useState(false)
   const [showMeta, setShowMeta] = useState(false)
   const [metaForm, setMetaForm] = useState({
@@ -140,7 +143,20 @@ export default function SongEditorPage() {
       idleTimer.current = null
     }
     collabSend(idx, sectionsRef.current[idx] ?? '', revisionRef.current)
+    setHasPendingEdit(false)
   }, [collabSend])
+
+  // Cmd/Ctrl+S 立即儲存(同步當前段落)
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault()
+        flushUpdate()
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [flushUpdate])
 
   const onSectionFocus = (idx: number) => {
     if (!editable) return
@@ -155,6 +171,7 @@ export default function SongEditorPage() {
     setSections(next)
     sectionsRef.current = next
     dirtySection.current = idx
+    setHasPendingEdit(true)
     if (idleTimer.current) clearTimeout(idleTimer.current)
     idleTimer.current = setTimeout(flushUpdate, IDLE_MS)
   }
@@ -447,9 +464,25 @@ export default function SongEditorPage() {
       {/* 分割檢視:左段落編輯、右預覽 */}
       <div className="grid lg:grid-cols-2 gap-4">
         <div className="flex flex-col gap-3">
-          <span className="text-sm font-medium text-gray-700">
-            ChordPro 原始碼(依段落編輯,他人編輯中的段落唯讀)
-          </span>
+          <div className="flex items-center justify-between min-h-8">
+            <span className="text-sm font-medium text-gray-700">
+              ChordPro 原始碼(依段落編輯,他人編輯中的段落唯讀)
+            </span>
+            {canEdit &&
+              (hasPendingEdit ? (
+                <button
+                  type="button"
+                  onClick={flushUpdate}
+                  className="bg-blue-600 text-white rounded px-4 py-1.5 text-sm font-medium hover:bg-blue-700 shrink-0"
+                >
+                  儲存(⌘S)
+                </button>
+              ) : (
+                <span className="text-sm text-green-600 shrink-0">
+                  ✓ 已自動儲存
+                </span>
+              ))}
+          </div>
           {sections.map((sectionContent, idx) => (
             <SectionBlock
               key={idx}
