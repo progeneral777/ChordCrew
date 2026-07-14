@@ -60,6 +60,19 @@ public class SectionLockRegistry {
                 && holder.expiresAt().isAfter(Instant.now());
     }
 
+    /**
+     * 是否被「其他」有效 session 持有。用於更新前的衝突判斷:段落無鎖或自己持鎖
+     * 都可寫入(儲存更寬容,避免鎖剛因 blur/TTL 釋放就把更新拒成 SYNC),
+     * 只有他人正在編輯該段落才拒絕。
+     */
+    public boolean isHeldByOther(UUID songId, int sectionIndex, String sessionId) {
+        Map<Integer, LockHolder> songLocks = locks.get(songId);
+        if (songLocks == null) return false;
+        LockHolder holder = songLocks.get(sectionIndex);
+        return holder != null && !holder.sessionId().equals(sessionId)
+                && holder.expiresAt().isAfter(Instant.now());
+    }
+
     /** 斷線時釋放該 session 的所有鎖,回傳 songId → 被釋放的段落 index 列表。 */
     public synchronized Map<UUID, List<Integer>> releaseSession(String sessionId) {
         Map<UUID, List<Integer>> released = new HashMap<>();

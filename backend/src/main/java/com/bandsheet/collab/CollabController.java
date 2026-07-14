@@ -89,8 +89,9 @@ public class CollabController {
         AuthUser user = authUser(principal);
         collabService.requireEditAccess(songId, user.id());
 
-        // 必須持鎖才能更新該段落
-        if (!lockRegistry.isHeldBy(songId, req.sectionIndex(), accessor.getSessionId())) {
+        // 只有「他人正持鎖」才拒絕該段落更新;段落無鎖或自己持鎖都放行,
+        // 避免鎖剛因 blur / TTL 釋放,儲存就被拒成 SYNC 而清空編輯區。
+        if (lockRegistry.isHeldByOther(songId, req.sectionIndex(), accessor.getSessionId())) {
             sendSyncToUser(principal, songId);
             return;
         }

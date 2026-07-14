@@ -110,8 +110,19 @@ export default function SongEditorPage() {
         }
       },
       onSync: (content, revision) => {
-        setAllSections(content, revision)
-        setNotice('內容已同步為最新版本')
+        // 保留使用者正在編輯、尚未成功送出的段落,其餘同步為伺服器最新版本,
+        // 避免一個 SYNC 就把正在打字的內容清空。
+        const dirty = dirtySection.current
+        const incoming = splitSections(content)
+        if (dirty !== null && dirty >= 0 && dirty < incoming.length) {
+          incoming[dirty] = sectionsRef.current[dirty] ?? incoming[dirty]
+          setSections(incoming)
+          sectionsRef.current = incoming
+          revisionRef.current = revision
+        } else {
+          setAllSections(content, revision)
+          setNotice('內容已同步為最新版本')
+        }
       },
       onReconnected: () => {
         // 重連後重新拉最新全文
