@@ -7,7 +7,7 @@ interface ImportSheetModalProps {
   onImport: (content: string) => void
 }
 
-const PLACEHOLDER = `從 91pu 等網站把譜「選取後複製」貼在這裡。
+const PLACEHOLDER = `把譜「選取後複製」貼在這裡。
 維持「和弦一行、歌詞一行」的排版即可,例如:
 
      C       G/B     Am      F

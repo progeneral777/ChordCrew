@@ -589,7 +589,7 @@ export default function SongEditorPage() {
                   onClick={() => setShowImport(true)}
                   className="border border-blue-400 text-blue-700 rounded px-3 py-1.5 hover:bg-blue-50"
                 >
-                  從其他網站貼上匯入
+                  貼上匯入
                 </button>
               </div>
             </div>
