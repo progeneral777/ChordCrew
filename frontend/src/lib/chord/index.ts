@@ -17,3 +17,4 @@ export {
   type SheetLine,
   type LyricSegment,
 } from './chordpro'
+export { importChordSheet } from './importSheet'

@@ -9,6 +9,7 @@ import AppLayout from '../../components/AppLayout'
 import SheetPreview from './SheetPreview'
 import SectionBlock from './SectionBlock'
 import VersionSidebar from './VersionSidebar'
+import ImportSheetModal from './ImportSheetModal'
 
 const ALL_KEYS = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B']
 const IDLE_MS = 3000 // 3 秒 idle 即廣播更新
@@ -67,6 +68,7 @@ export default function SongEditorPage() {
   const [hasPendingEdit, setHasPendingEdit] = useState(false)
 
   const [showVersions, setShowVersions] = useState(false)
+  const [showImport, setShowImport] = useState(false)
   const [showMeta, setShowMeta] = useState(false)
   const [metaForm, setMetaForm] = useState({
     title: '',
@@ -244,19 +246,33 @@ export default function SongEditorPage() {
     }
   }
 
-  const onInsertExample = async () => {
-    if (!id) return
+  // 用 REST 全文取代(範例插入、貼上匯入共用):會落庫並廣播 SYNC 給協作者。
+  const replaceContent = useCallback(
+    async (content: string, successMsg: string) => {
+      if (!id) return
+      setError('')
+      try {
+        const res = await songsApi.updateContent(id, content, revisionRef.current)
+        setAllSections(content, res.data.data.revision)
+        dirtySection.current = null
+        setHasPendingEdit(false)
+        setNotice(successMsg)
+      } catch (err) {
+        setError(apiErrorMessage(err, '寫入失敗,請重新整理後再試'))
+      }
+    },
+    [id, setAllSections]
+  )
+
+  const onInsertExample = () => {
     if (joined.trim() && !window.confirm('這會取代目前的譜面內容,確定要插入範例歌曲嗎?')) return
-    setError('')
-    try {
-      const res = await songsApi.updateContent(id, EXAMPLE_SONG, revisionRef.current)
-      setAllSections(EXAMPLE_SONG, res.data.data.revision)
-      dirtySection.current = null
-      setHasPendingEdit(false)
-      setNotice('已插入範例歌曲,可直接編輯或參考寫法')
-    } catch (err) {
-      setError(apiErrorMessage(err, '插入範例失敗,請重新整理後再試'))
-    }
+    void replaceContent(EXAMPLE_SONG, '已插入範例歌曲,可直接編輯或參考寫法')
+  }
+
+  const onImport = (content: string) => {
+    if (joined.trim() && !window.confirm('這會取代目前的譜面內容,確定匯入嗎?')) return
+    void replaceContent(content, '已匯入並轉換為和弦譜格式')
+    setShowImport(false)
   }
 
   const onPermanentTranspose = async () => {
@@ -523,7 +539,16 @@ export default function SongEditorPage() {
               {canEdit && (
                 <button
                   type="button"
-                  onClick={() => void onInsertExample()}
+                  onClick={() => setShowImport(true)}
+                  className="text-sm text-blue-600 hover:underline"
+                >
+                  貼上匯入
+                </button>
+              )}
+              {canEdit && (
+                <button
+                  type="button"
+                  onClick={onInsertExample}
                   className="text-sm text-blue-600 hover:underline"
                 >
                   插入範例
@@ -545,15 +570,29 @@ export default function SongEditorPage() {
           </div>
 
           {canEdit && !joined.trim() && (
-            <button
-              type="button"
-              onClick={() => void onInsertExample()}
-              className="border-2 border-dashed border-blue-300 text-blue-600 rounded-lg p-4 text-sm text-left hover:bg-blue-50 hover:border-blue-400 transition-colors"
-            >
-              ✨ 還不知道怎麼寫?按這裡插入一首範例歌曲,參考和弦與歌詞的寫法(段落標題、
-              <code className="mx-0.5 px-1 bg-blue-100 rounded">| C | G |</code> 純和弦行、
-              歌詞內的 <code className="mx-0.5 px-1 bg-blue-100 rounded">[C]和弦</code> 錨點)
-            </button>
+            <div className="border-2 border-dashed border-blue-300 rounded-lg p-4 text-sm text-blue-700 flex flex-col gap-2">
+              <span>
+                ✨ 還不知道怎麼寫?可以參考和弦與歌詞的寫法(段落標題、
+                <code className="mx-0.5 px-1 bg-blue-100 rounded">| C | G |</code> 純和弦行、
+                歌詞內的 <code className="mx-0.5 px-1 bg-blue-100 rounded">[C]和弦</code> 錨點)
+              </span>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={onInsertExample}
+                  className="bg-blue-600 text-white rounded px-3 py-1.5 hover:bg-blue-700"
+                >
+                  插入範例歌曲
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowImport(true)}
+                  className="border border-blue-400 text-blue-700 rounded px-3 py-1.5 hover:bg-blue-50"
+                >
+                  從其他網站貼上匯入
+                </button>
+              </div>
+            </div>
           )}
           {sections.map((sectionContent, idx) => (
             <SectionBlock
@@ -590,6 +629,10 @@ export default function SongEditorPage() {
           </div>
         </div>
       </div>
+
+      {showImport && (
+        <ImportSheetModal onClose={() => setShowImport(false)} onImport={onImport} />
+      )}
 
       {showVersions && id && (
         <VersionSidebar
