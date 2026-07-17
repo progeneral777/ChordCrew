@@ -13,6 +13,31 @@ import VersionSidebar from './VersionSidebar'
 const ALL_KEYS = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B']
 const IDLE_MS = 3000 // 3 秒 idle 即廣播更新
 
+// 範例歌曲:示範 ChordPro 變體寫法(段落標題、純和弦小節行、歌詞內和弦錨點)。
+// 依 CHORD_SPEC.md,歌詞正文皆為原創以避免版權問題。
+const EXAMPLE_SONG = `[Intro]
+| C | G/B | Am | F |
+
+[Verse 1]
+夜色[C]慢慢亮起 街燈[G/B]還沒睡去
+我背著[Am]吉他 走過熟悉的[F]巷子
+把煩惱[C]留在原地 把心事[G/B]輕輕放低
+唱一首[Am]屬於我們的[F]歌[G]
+
+[Chorus]
+就算全世[C]界都在下[G]雨
+也擋不[Am]住我想你的[F]心
+我會為[C]你寫下這[G]首歌
+在每個[Am]需要勇氣的[F]夜[G]裡[C]
+
+[Bridge]
+| Am | F | C | G |
+| Am | F | Dsus4 | G7 |
+
+[Verse 2]
+時間[C]慢慢過去 我們[G/B]都會長大
+那些[Am]旋律 依然刻在心[F]底`
+
 function normalizeShift(n: number): number {
   const m = ((n % 12) + 12) % 12
   return m > 6 ? m - 12 : m
@@ -216,6 +241,21 @@ export default function SongEditorPage() {
       setShowMeta(false)
     } catch (err) {
       setError(apiErrorMessage(err, '更新歌曲資訊失敗'))
+    }
+  }
+
+  const onInsertExample = async () => {
+    if (!id) return
+    if (joined.trim() && !window.confirm('這會取代目前的譜面內容,確定要插入範例歌曲嗎?')) return
+    setError('')
+    try {
+      const res = await songsApi.updateContent(id, EXAMPLE_SONG, revisionRef.current)
+      setAllSections(EXAMPLE_SONG, res.data.data.revision)
+      dirtySection.current = null
+      setHasPendingEdit(false)
+      setNotice('已插入範例歌曲,可直接編輯或參考寫法')
+    } catch (err) {
+      setError(apiErrorMessage(err, '插入範例失敗,請重新整理後再試'))
     }
   }
 
@@ -475,25 +515,46 @@ export default function SongEditorPage() {
       {/* 分割檢視:左段落編輯、右預覽 */}
       <div className="grid lg:grid-cols-2 gap-4">
         <div className="flex flex-col gap-3">
-          <div className="flex items-center justify-between min-h-8">
+          <div className="flex items-center justify-between min-h-8 gap-3">
             <span className="text-sm font-medium text-gray-700">
               ChordPro 原始碼(依段落編輯,他人編輯中的段落唯讀)
             </span>
-            {canEdit &&
-              (hasPendingEdit ? (
+            <div className="flex items-center gap-3 shrink-0">
+              {canEdit && (
                 <button
                   type="button"
-                  onClick={flushUpdate}
-                  className="bg-blue-600 text-white rounded px-4 py-1.5 text-sm font-medium hover:bg-blue-700 shrink-0"
+                  onClick={() => void onInsertExample()}
+                  className="text-sm text-blue-600 hover:underline"
                 >
-                  儲存(⌘S)
+                  插入範例
                 </button>
-              ) : (
-                <span className="text-sm text-green-600 shrink-0">
-                  ✓ 已自動儲存
-                </span>
-              ))}
+              )}
+              {canEdit &&
+                (hasPendingEdit ? (
+                  <button
+                    type="button"
+                    onClick={flushUpdate}
+                    className="bg-blue-600 text-white rounded px-4 py-1.5 text-sm font-medium hover:bg-blue-700"
+                  >
+                    儲存(⌘S)
+                  </button>
+                ) : (
+                  <span className="text-sm text-green-600">✓ 已自動儲存</span>
+                ))}
+            </div>
           </div>
+
+          {canEdit && !joined.trim() && (
+            <button
+              type="button"
+              onClick={() => void onInsertExample()}
+              className="border-2 border-dashed border-blue-300 text-blue-600 rounded-lg p-4 text-sm text-left hover:bg-blue-50 hover:border-blue-400 transition-colors"
+            >
+              ✨ 還不知道怎麼寫?按這裡插入一首範例歌曲,參考和弦與歌詞的寫法(段落標題、
+              <code className="mx-0.5 px-1 bg-blue-100 rounded">| C | G |</code> 純和弦行、
+              歌詞內的 <code className="mx-0.5 px-1 bg-blue-100 rounded">[C]和弦</code> 錨點)
+            </button>
+          )}
           {sections.map((sectionContent, idx) => (
             <SectionBlock
               key={idx}
