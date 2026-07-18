@@ -70,7 +70,7 @@ export default function SongEditorPage() {
 
   const [showVersions, setShowVersions] = useState(false)
   const [showImport, setShowImport] = useState(false)
-  const [showMeta, setShowMeta] = useState(false)
+  const [showMeta, setShowMeta] = useState(true) // 預設展開歌曲資訊,不必點開
   const [metaForm, setMetaForm] = useState({
     title: '',
     artist: '',
