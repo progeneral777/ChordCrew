@@ -29,15 +29,26 @@ Base URL: `/api`
 | PATCH | /bands/{id}/members/{userId} | { role } (OWNER) |
 
 ## Songs
+歌曲屬於建立者(owner),可分享到零到多個樂團(見 DATA_MODEL 的 `song_bands`)。
+`SongSummary`/`SongDetail` 皆帶 `bandIds`(已分享樂團,可多個;空 = 個人歌曲)、
+`favorite`(目前使用者是否加入最愛);`SongDetail` 另含 `ownerId`。
+存取權:歌曲屬於某樂團時沿用樂團角色;個人歌曲(未分享)僅建立者可存取。
+
 | Method | Path | 說明 |
 |---|---|---|
-| GET | /bands/{bandId}/songs?query=&tag=&sort=updated | 列表(不含 content) |
-| POST | /bands/{bandId}/songs | { title, artist?, originalKey?, bpm?, timeSignature?, tags? } (EDITOR+) |
-| GET | /songs/{id} | 詳情含 content 與 revision |
+| GET | /bands/{bandId}/songs?query=&tag=&sort=updated | 某樂團的歌曲列表(不含 content) |
+| POST | /bands/{bandId}/songs | 在樂團建立歌曲,建立者為 owner 並直接分享到該團 (EDITOR+) |
+| GET | /me/songs?query=&tag=&sort=updated | 我的歌曲庫(owner 為我,含已分享出去的) |
+| POST | /me/songs | 建立個人歌曲(尚未分享到任何樂團) |
+| GET | /songs/{id} | 詳情含 content、revision、bandIds、favorite、ownerId |
 | PATCH | /songs/{id} | metadata 更新 (EDITOR+) |
 | PUT | /songs/{id}/content | { content, baseRevision } → 409 REVISION_CONFLICT 時回最新 { content, revision } |
 | POST | /songs/{id}/transpose | { semitones } 永久移調,改寫 content (EDITOR+) |
 | DELETE | /songs/{id} | 軟刪除 (EDITOR+) |
+| POST | /songs/{id}/share | { bandId } 分享到一個樂團(可累加多團;僅 owner,且需為該團 EDITOR+) |
+| POST | /songs/{id}/unshare | { bandId } 取消分享某個樂團(僅 owner) |
+| POST | /songs/{id}/favorite | 加入我的最愛(需可讀該歌)→ 204 |
+| DELETE | /songs/{id}/favorite | 取消我的最愛 → 204 |
 
 ## Versions
 | Method | Path | 說明 |
