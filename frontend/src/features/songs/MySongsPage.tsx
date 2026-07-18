@@ -88,10 +88,10 @@ export default function MySongsPage() {
     }
   }
 
-  const onUnshare = async (songId: string) => {
+  const onUnshare = async (songId: string, bandId: string) => {
     setError('')
     try {
-      const res = await songsApi.unshare(songId)
+      const res = await songsApi.unshare(songId, bandId)
       replaceSong(res.data.data.song)
     } catch (err) {
       setError(apiErrorMessage(err, '取消分享失敗'))
@@ -189,36 +189,45 @@ export default function MySongsPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 shrink-0">
-                {song.bandId ? (
-                  <>
-                    <span className="text-xs bg-emerald-100 text-emerald-700 rounded-full px-2.5 py-1">
-                      已分享 · {bandName(song.bandId)}
-                    </span>
+              <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end max-w-md">
+                {song.bandIds.map((bid) => (
+                  <span
+                    key={bid}
+                    className="text-xs bg-emerald-100 text-emerald-700 rounded-full pl-2.5 pr-1 py-1 flex items-center gap-1"
+                  >
+                    {bandName(bid)}
                     <button
                       type="button"
-                      onClick={() => void onUnshare(song.id)}
-                      className="text-sm text-gray-500 hover:text-gray-800"
+                      title="取消分享"
+                      onClick={() => void onUnshare(song.id, bid)}
+                      className="w-4 h-4 rounded-full hover:bg-emerald-200 text-emerald-600"
                     >
-                      取消分享
+                      ×
                     </button>
-                  </>
-                ) : shareTargets.length > 0 ? (
-                  <select
-                    value=""
-                    onChange={(e) => e.target.value && void onShare(song.id, e.target.value)}
-                    className="text-sm border border-gray-300 rounded px-2 py-1 bg-white text-blue-600"
-                  >
-                    <option value="">分享到樂團…</option>
-                    {shareTargets.map((b) => (
-                      <option key={b.id} value={b.id}>
-                        {b.name}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <span className="text-xs text-gray-400">個人</span>
-                )}
+                  </span>
+                ))}
+                {(() => {
+                  const avail = shareTargets.filter((b) => !song.bandIds.includes(b.id))
+                  if (avail.length === 0) {
+                    return song.bandIds.length === 0 ? (
+                      <span className="text-xs text-gray-400">個人</span>
+                    ) : null
+                  }
+                  return (
+                    <select
+                      value=""
+                      onChange={(e) => e.target.value && void onShare(song.id, e.target.value)}
+                      className="text-sm border border-gray-300 rounded px-2 py-1 bg-white text-blue-600"
+                    >
+                      <option value="">＋ 分享到樂團…</option>
+                      {avail.map((b) => (
+                        <option key={b.id} value={b.id}>
+                          {b.name}
+                        </option>
+                      ))}
+                    </select>
+                  )
+                })()}
 
                 <button
                   type="button"

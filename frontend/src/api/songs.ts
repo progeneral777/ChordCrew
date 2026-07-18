@@ -3,8 +3,8 @@ import type { Role } from './bands'
 
 export interface SongSummary {
   id: string
-  /** null = 尚未分享(個人歌曲);有值 = 已分享到該樂團 */
-  bandId: string | null
+  /** 已分享到的樂團(可多個;空陣列 = 個人歌曲,尚未分享) */
+  bandIds: string[]
   title: string
   artist: string | null
   originalKey: string | null
@@ -43,8 +43,8 @@ export const songsApi = {
     client.post<{ data: { song: SongDetail } }>(`/me/songs`, input),
   share: (id: string, bandId: string) =>
     client.post<{ data: { song: SongDetail } }>(`/songs/${id}/share`, { bandId }),
-  unshare: (id: string) =>
-    client.post<{ data: { song: SongDetail } }>(`/songs/${id}/unshare`),
+  unshare: (id: string, bandId: string) =>
+    client.post<{ data: { song: SongDetail } }>(`/songs/${id}/unshare`, { bandId }),
   get: (id: string) => client.get<{ data: { song: SongDetail } }>(`/songs/${id}`),
   updateMetadata: (id: string, input: SongMetadataInput) =>
     client.patch<{ data: { song: SongDetail } }>(`/songs/${id}`, input),

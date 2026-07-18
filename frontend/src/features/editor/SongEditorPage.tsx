@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { apiErrorMessage } from '../../api/bands'
 import { songsApi, type SongDetail } from '../../api/songs'
 import { applySectionUpdate, splitSections, transposeKey } from '../../lib/chord'
@@ -46,6 +46,7 @@ function normalizeShift(n: number): number {
 
 export default function SongEditorPage() {
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
   const myUserId = useAuthStore((s) => s.user?.id)
 
   const [song, setSong] = useState<SongDetail | null>(null)
@@ -315,12 +316,13 @@ export default function SongEditorPage() {
     <AppLayout>
       {/* 標題列 */}
       <div className="mb-4">
-        <Link
-          to={song.bandId ? `/bands/${song.bandId}` : '/my-songs'}
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
           className="text-sm text-blue-600 hover:underline"
         >
-          {song.bandId ? '← 回樂團' : '← 我的歌曲'}
-        </Link>
+          ← 返回
+        </button>
         <div className="flex items-center justify-between mt-1 flex-wrap gap-2">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">{song.title}</h2>

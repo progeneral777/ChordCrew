@@ -88,7 +88,7 @@ export default function SongsPanel({ bandId, myRole }: SongsPanelProps) {
     setError('')
     try {
       const res = await songsApi.listMine()
-      setPullList(res.data.data.songs.filter((s) => s.bandId === null))
+      setPullList(res.data.data.songs.filter((s) => !s.bandIds.includes(bandId)))
     } catch (err) {
       setError(apiErrorMessage(err, '無法載入我的歌曲'))
     }
@@ -152,7 +152,7 @@ export default function SongsPanel({ bandId, myRole }: SongsPanelProps) {
           </p>
           {pullList.length === 0 ? (
             <p className="text-sm text-gray-400">
-              沒有可拉入的個人歌曲。先到上方「我的歌曲」建立,或該歌曲已分享到其他樂團。
+              沒有可拉入的歌曲。你的歌曲可能都已在這個樂團,或先到「我的歌曲」建立。
             </p>
           ) : (
             <ul className="divide-y divide-gray-200">

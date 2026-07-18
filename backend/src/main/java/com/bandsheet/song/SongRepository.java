@@ -12,9 +12,11 @@ public interface SongRepository extends JpaRepository<Song, UUID> {
 
     // cast(:q as string):明確給定文字型別,否則 PostgreSQL 會把未指定型別的
     // null 參數推斷為 bytea,導致 lower(bytea) 不存在而整個查詢 500(H2 不會)。
+    // 某樂團的歌曲 = 有分享關聯到該樂團的歌(透過 song_bands)。
     @Query("""
             select s from Song s
-            where s.bandId = :bandId and s.deletedAt is null
+            where s.deletedAt is null
+              and s.id in (select sb.songId from SongBand sb where sb.bandId = :bandId)
               and (:q is null or lower(s.title) like lower(concat('%', cast(:q as string), '%')))
             """)
     List<Song> search(@Param("bandId") UUID bandId, @Param("q") String q);

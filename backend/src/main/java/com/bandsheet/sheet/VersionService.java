@@ -9,6 +9,7 @@ import com.bandsheet.sheet.dto.VersionDtos.VersionDetail;
 import com.bandsheet.sheet.dto.VersionDtos.VersionSummary;
 import com.bandsheet.song.Song;
 import com.bandsheet.song.SongAccess;
+import com.bandsheet.song.SongBandRepository;
 import com.bandsheet.song.SongMapper;
 import com.bandsheet.song.SongRepository;
 import com.bandsheet.song.dto.SongDtos.SongDetail;
@@ -29,6 +30,7 @@ public class VersionService {
 
     private final SongVersionRepository versionRepository;
     private final SongRepository songRepository;
+    private final SongBandRepository songBands;
     private final UserRepository userRepository;
     private final SongAccess songAccess;
     private final FavoriteService favoriteService;
@@ -36,12 +38,14 @@ public class VersionService {
 
     public VersionService(SongVersionRepository versionRepository,
                           SongRepository songRepository,
+                          SongBandRepository songBands,
                           UserRepository userRepository,
                           SongAccess songAccess,
                           FavoriteService favoriteService,
                           ApplicationEventPublisher events) {
         this.versionRepository = versionRepository;
         this.songRepository = songRepository;
+        this.songBands = songBands;
         this.userRepository = userRepository;
         this.songAccess = songAccess;
         this.favoriteService = favoriteService;
@@ -98,7 +102,8 @@ public class VersionService {
         song.bumpRevision();
         events.publishEvent(new SongContentReplaced(songId, song.getContent(), song.getRevision()));
 
-        return SongMapper.toDetail(song, role, favoriteService.isFavorite(userId, songId));
+        return SongMapper.toDetail(song, songBands.findBandIdsBySongId(songId), role,
+                favoriteService.isFavorite(userId, songId));
     }
 
     private Song requireSong(UUID songId) {

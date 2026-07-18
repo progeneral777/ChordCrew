@@ -1,7 +1,6 @@
 package com.bandsheet.song;
 
 import com.bandsheet.band.BandAccess;
-import com.bandsheet.band.BandMember;
 import com.bandsheet.band.Role;
 import com.bandsheet.common.exception.AppException;
 import com.bandsheet.song.chord.ChordUtil;
@@ -15,8 +14,11 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -25,14 +27,17 @@ import java.util.stream.Stream;
 public class SongService {
 
     private final SongRepository songRepository;
+    private final SongBandRepository songBands;
     private final BandAccess bandAccess;
     private final SongAccess songAccess;
     private final FavoriteService favoriteService;
     private final ApplicationEventPublisher events;
 
-    public SongService(SongRepository songRepository, BandAccess bandAccess, SongAccess songAccess,
+    public SongService(SongRepository songRepository, SongBandRepository songBands,
+                       BandAccess bandAccess, SongAccess songAccess,
                        FavoriteService favoriteService, ApplicationEventPublisher events) {
         this.songRepository = songRepository;
+        this.songBands = songBands;
         this.bandAccess = bandAccess;
         this.songAccess = songAccess;
         this.favoriteService = favoriteService;
@@ -58,38 +63,40 @@ public class SongService {
     /** 在樂團裡建立歌曲:建立者為 owner,並直接分享到該樂團。 */
     @Transactional
     public SongDetail create(UUID bandId, UUID userId, CreateSongRequest req) {
-        BandMember me = bandAccess.requireRole(bandId, userId, Role.EDITOR);
-        Song song = newSong(userId, req);
-        song.setBandId(bandId);
-        return SongMapper.toDetail(songRepository.save(song), me.getRole(), false);
+        bandAccess.requireRole(bandId, userId, Role.EDITOR);
+        Song song = songRepository.save(newSong(userId, req));
+        songBands.save(new SongBand(song.getId(), bandId));
+        return SongMapper.toDetail(song, List.of(bandId), Role.OWNER, false);
     }
 
     /** 在「我的歌曲」建立個人歌曲(尚未分享到任何樂團)。 */
     @Transactional
     public SongDetail createPersonal(UUID userId, CreateSongRequest req) {
-        Song song = newSong(userId, req);
-        return SongMapper.toDetail(songRepository.save(song), Role.OWNER, false);
+        Song song = songRepository.save(newSong(userId, req));
+        return SongMapper.toDetail(song, List.of(), Role.OWNER, false);
     }
 
     // --- 分享 ---
 
-    /** 把個人歌曲分享到樂團(需為該曲建立者,且為目標樂團的 EDITOR 以上)。 */
+    /** 把歌曲分享到某個樂團(可累加多個;需為建立者且為目標樂團 EDITOR 以上)。 */
     @Transactional
     public SongDetail share(UUID songId, UUID userId, UUID bandId) {
         Song song = requireSong(songId);
         songAccess.requireOwner(song, userId);
         bandAccess.requireRole(bandId, userId, Role.EDITOR);
-        song.setBandId(bandId);
-        return SongMapper.toDetail(song, Role.OWNER, favoriteService.isFavorite(userId, songId));
+        if (!songBands.existsBySongIdAndBandId(songId, bandId)) {
+            songBands.save(new SongBand(songId, bandId));
+        }
+        return detailFor(song, userId, Role.OWNER);
     }
 
-    /** 取消分享,歌曲回到個人歌曲庫(需為建立者)。 */
+    /** 取消分享到某個樂團(需為建立者)。 */
     @Transactional
-    public SongDetail unshare(UUID songId, UUID userId) {
+    public SongDetail unshare(UUID songId, UUID userId, UUID bandId) {
         Song song = requireSong(songId);
         songAccess.requireOwner(song, userId);
-        song.setBandId(null);
-        return SongMapper.toDetail(song, Role.OWNER, favoriteService.isFavorite(userId, songId));
+        songBands.deleteBySongIdAndBandId(songId, bandId);
+        return detailFor(song, userId, Role.OWNER);
     }
 
     // --- 讀取 / 更新 ---
@@ -98,7 +105,7 @@ public class SongService {
     public SongDetail get(UUID songId, UUID userId) {
         Song song = requireSong(songId);
         Role role = songAccess.requireView(song, userId);
-        return SongMapper.toDetail(song, role, favoriteService.isFavorite(userId, songId));
+        return detailFor(song, userId, role);
     }
 
     @Transactional
@@ -116,7 +123,7 @@ public class SongService {
         if (req.bpm() != null) song.setBpm(req.bpm());
         if (req.timeSignature() != null) song.setTimeSignature(req.timeSignature());
         if (req.tags() != null) song.setTags(req.tags());
-        return SongMapper.toDetail(song, role, favoriteService.isFavorite(userId, songId));
+        return detailFor(song, userId, role);
     }
 
     public record ContentUpdateResult(boolean conflict, String content, int revision) {}
@@ -144,7 +151,7 @@ public class SongService {
         }
         song.bumpRevision();
         events.publishEvent(new SongContentReplaced(songId, song.getContent(), song.getRevision()));
-        return SongMapper.toDetail(song, role, favoriteService.isFavorite(userId, songId));
+        return detailFor(song, userId, role);
     }
 
     @Transactional
@@ -167,6 +174,11 @@ public class SongService {
         return song;
     }
 
+    private SongDetail detailFor(Song song, UUID userId, Role role) {
+        return SongMapper.toDetail(song, songBands.findBandIdsBySongId(song.getId()),
+                role, favoriteService.isFavorite(userId, song.getId()));
+    }
+
     private List<SongSummary> toSummaries(List<Song> found, UUID userId, String tag, String sort) {
         Stream<Song> stream = found.stream();
         if (tag != null && !tag.isBlank()) {
@@ -176,8 +188,18 @@ public class SongService {
                 ? Comparator.comparing(Song::getTitle, String.CASE_INSENSITIVE_ORDER)
                 : Comparator.comparing(Song::getUpdatedAt).reversed();
         List<Song> ordered = stream.sorted(comparator).toList();
+        if (ordered.isEmpty()) return List.of();
+
+        List<UUID> ids = ordered.stream().map(Song::getId).toList();
+        Map<UUID, List<UUID>> bandMap = new HashMap<>();
+        for (SongBand sb : songBands.findBySongIdIn(ids)) {
+            bandMap.computeIfAbsent(sb.getSongId(), k -> new ArrayList<>()).add(sb.getBandId());
+        }
         Set<UUID> fav = favoriteService.favoriteIdsAmong(userId, ordered);
-        return ordered.stream().map(s -> SongMapper.toSummary(s, fav.contains(s.getId()))).toList();
+        return ordered.stream()
+                .map(s -> SongMapper.toSummary(s, bandMap.getOrDefault(s.getId(), List.of()),
+                        fav.contains(s.getId())))
+                .toList();
     }
 
     private static String blankToNull(String s) {

@@ -83,8 +83,9 @@ public class SongController {
 
     @PostMapping("/songs/{id}/unshare")
     public ApiResponse<Map<String, SongDetail>> unshare(@AuthenticationPrincipal AuthUser me,
-                                                        @PathVariable UUID id) {
-        return ApiResponse.ok(Map.of("song", songService.unshare(id, me.id())));
+                                                        @PathVariable UUID id,
+                                                        @Valid @RequestBody ShareRequest req) {
+        return ApiResponse.ok(Map.of("song", songService.unshare(id, me.id(), req.bandId())));
     }
 
     @GetMapping("/songs/{id}")

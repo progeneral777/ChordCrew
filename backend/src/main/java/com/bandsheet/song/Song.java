@@ -18,10 +18,6 @@ public class Song extends BaseEntity {
     @Column(name = "owner_id", nullable = false)
     private UUID ownerId;
 
-    // 可為空:null = 個人歌曲(只在建立者的歌曲庫);設值 = 已分享到該樂團。
-    @Column(name = "band_id")
-    private UUID bandId;
-
     @Column(nullable = false, length = 200)
     private String title;
 
@@ -58,8 +54,6 @@ public class Song extends BaseEntity {
     }
 
     public UUID getOwnerId() { return ownerId; }
-    public UUID getBandId() { return bandId; }
-    public void setBandId(UUID bandId) { this.bandId = bandId; }
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
     public String getArtist() { return artist; }
