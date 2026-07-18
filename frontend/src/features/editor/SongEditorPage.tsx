@@ -70,7 +70,7 @@ export default function SongEditorPage() {
 
   const [showVersions, setShowVersions] = useState(false)
   const [showImport, setShowImport] = useState(false)
-  const [showMeta, setShowMeta] = useState(true) // 預設展開歌曲資訊,不必點開
+  const [editingMeta, setEditingMeta] = useState(false) // 歌曲資訊預設唯讀,按「編輯」才可改
   const [metaForm, setMetaForm] = useState({
     title: '',
     artist: '',
@@ -241,10 +241,25 @@ export default function SongEditorPage() {
       const s = res.data.data.song
       setSong((prev) => (prev ? { ...prev, ...s, content: prev.content } : s))
       setNotice('資訊已更新')
-      setShowMeta(false)
+      setEditingMeta(false)
     } catch (err) {
       setError(apiErrorMessage(err, '更新歌曲資訊失敗'))
     }
+  }
+
+  // 取消編輯:欄位還原成目前歌曲的值,回到唯讀狀態。
+  const onCancelMeta = () => {
+    if (song) {
+      setMetaForm({
+        title: song.title,
+        artist: song.artist ?? '',
+        originalKey: song.originalKey ?? '',
+        bpm: song.bpm != null ? String(song.bpm) : '',
+        timeSignature: song.timeSignature ?? '',
+        tags: (song.tags ?? []).join(', '),
+      })
+    }
+    setEditingMeta(false)
   }
 
   // 用 REST 全文取代(範例插入、貼上匯入共用):會落庫並廣播 SYNC 給協作者。
@@ -357,15 +372,6 @@ export default function SongEditorPage() {
             >
               版本歷史
             </button>
-            {canEdit && (
-              <button
-                type="button"
-                onClick={() => setShowMeta((v) => !v)}
-                className="text-sm text-blue-600 hover:underline"
-              >
-                {showMeta ? '收合' : '編輯歌曲資訊'}
-              </button>
-            )}
           </div>
         </div>
       </div>
@@ -377,74 +383,108 @@ export default function SongEditorPage() {
         </div>
       )}
 
-      {/* metadata 表單 */}
-      {showMeta && canEdit && (
-        <form onSubmit={onSaveMetadata} className="bg-white rounded-lg shadow p-4 mb-4 grid gap-3 sm:grid-cols-3">
-          <label className="text-sm">
-            歌名 *
-            <input
-              required
-              value={metaForm.title}
-              onChange={(e) => setMetaForm({ ...metaForm, title: e.target.value })}
-              className="mt-1 w-full border border-gray-300 rounded px-2 py-1.5"
-            />
-          </label>
-          <label className="text-sm">
-            原唱/作者
-            <input
-              value={metaForm.artist}
-              onChange={(e) => setMetaForm({ ...metaForm, artist: e.target.value })}
-              className="mt-1 w-full border border-gray-300 rounded px-2 py-1.5"
-            />
-          </label>
-          <label className="text-sm">
-            原調
-            <select
-              value={metaForm.originalKey}
-              onChange={(e) => setMetaForm({ ...metaForm, originalKey: e.target.value })}
-              className="mt-1 w-full border border-gray-300 rounded px-2 py-1.5 bg-white"
-            >
-              <option value="">未設定</option>
-              {ALL_KEYS.flatMap((k) => [k, k + 'm']).map((k) => (
-                <option key={k} value={k}>
-                  {k}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="text-sm">
-            BPM
-            <input
-              type="number"
-              min={1}
-              max={400}
-              value={metaForm.bpm}
-              onChange={(e) => setMetaForm({ ...metaForm, bpm: e.target.value })}
-              className="mt-1 w-full border border-gray-300 rounded px-2 py-1.5"
-            />
-          </label>
-          <label className="text-sm">
-            拍號
-            <input
-              placeholder="4/4"
-              value={metaForm.timeSignature}
-              onChange={(e) => setMetaForm({ ...metaForm, timeSignature: e.target.value })}
-              className="mt-1 w-full border border-gray-300 rounded px-2 py-1.5"
-            />
-          </label>
-          <label className="text-sm">
-            標籤(逗號分隔)
-            <input
-              value={metaForm.tags}
-              onChange={(e) => setMetaForm({ ...metaForm, tags: e.target.value })}
-              className="mt-1 w-full border border-gray-300 rounded px-2 py-1.5"
-            />
-          </label>
-          <div className="sm:col-span-3">
-            <button type="submit" className="bg-blue-600 text-white rounded px-4 py-1.5 text-sm hover:bg-blue-700">
-              儲存資訊
-            </button>
+      {/* 歌曲資訊:預設唯讀顯示,按「編輯」才能修改 */}
+      {canEdit && (
+        <form onSubmit={onSaveMetadata} className="bg-white rounded-lg shadow p-4 mb-4">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm font-medium text-gray-700">歌曲資訊</span>
+            {!editingMeta && (
+              <button
+                type="button"
+                onClick={() => setEditingMeta(true)}
+                className="text-sm text-blue-600 hover:underline"
+              >
+                編輯
+              </button>
+            )}
           </div>
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            <label className="text-sm">
+              歌名 *
+              <input
+                required
+                disabled={!editingMeta}
+                value={metaForm.title}
+                onChange={(e) => setMetaForm({ ...metaForm, title: e.target.value })}
+                className="mt-1 w-full border border-gray-300 rounded px-2 py-1.5 disabled:bg-gray-50 disabled:text-gray-500"
+              />
+            </label>
+            <label className="text-sm">
+              原唱/作者
+              <input
+                disabled={!editingMeta}
+                value={metaForm.artist}
+                onChange={(e) => setMetaForm({ ...metaForm, artist: e.target.value })}
+                className="mt-1 w-full border border-gray-300 rounded px-2 py-1.5 disabled:bg-gray-50 disabled:text-gray-500"
+              />
+            </label>
+            <label className="text-sm">
+              原調
+              <select
+                disabled={!editingMeta}
+                value={metaForm.originalKey}
+                onChange={(e) => setMetaForm({ ...metaForm, originalKey: e.target.value })}
+                className="mt-1 w-full border border-gray-300 rounded px-2 py-1.5 bg-white disabled:bg-gray-50 disabled:text-gray-500"
+              >
+                <option value="">未設定</option>
+                {ALL_KEYS.flatMap((k) => [k, k + 'm']).map((k) => (
+                  <option key={k} value={k}>
+                    {k}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-sm">
+              BPM
+              <input
+                type="number"
+                min={1}
+                max={400}
+                disabled={!editingMeta}
+                value={metaForm.bpm}
+                onChange={(e) => setMetaForm({ ...metaForm, bpm: e.target.value })}
+                className="mt-1 w-full border border-gray-300 rounded px-2 py-1.5 disabled:bg-gray-50 disabled:text-gray-500"
+              />
+            </label>
+            <label className="text-sm">
+              拍號
+              <input
+                placeholder="4/4"
+                disabled={!editingMeta}
+                value={metaForm.timeSignature}
+                onChange={(e) => setMetaForm({ ...metaForm, timeSignature: e.target.value })}
+                className="mt-1 w-full border border-gray-300 rounded px-2 py-1.5 disabled:bg-gray-50 disabled:text-gray-500"
+              />
+            </label>
+            <label className="text-sm">
+              分類/標籤(逗號分隔)
+              <input
+                disabled={!editingMeta}
+                value={metaForm.tags}
+                onChange={(e) => setMetaForm({ ...metaForm, tags: e.target.value })}
+                className="mt-1 w-full border border-gray-300 rounded px-2 py-1.5 disabled:bg-gray-50 disabled:text-gray-500"
+              />
+            </label>
+          </div>
+
+          {editingMeta && (
+            <div className="mt-3 flex gap-2">
+              <button
+                type="submit"
+                className="bg-blue-600 text-white rounded px-4 py-1.5 text-sm hover:bg-blue-700"
+              >
+                儲存資訊
+              </button>
+              <button
+                type="button"
+                onClick={onCancelMeta}
+                className="border border-gray-300 text-gray-600 rounded px-4 py-1.5 text-sm hover:bg-gray-50"
+              >
+                取消
+              </button>
+            </div>
+          )}
         </form>
       )}
 
