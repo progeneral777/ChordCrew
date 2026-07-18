@@ -20,6 +20,7 @@ export default function MySongsPage() {
   const [tag, setTag] = useState('')
   const [onlyFav, setOnlyFav] = useState(false)
   const [page, setPage] = useState(0)
+  const [editMode, setEditMode] = useState(false) // 關閉時隱藏分享/取消分享/刪除等編輯功能
 
   useEffect(() => {
     Promise.all([songsApi.listMine(), bandsApi.list()])
@@ -122,6 +123,17 @@ export default function MySongsPage() {
     <AppLayout>
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-gray-900">我的歌曲</h2>
+        <button
+          type="button"
+          onClick={() => setEditMode((v) => !v)}
+          className={`text-sm rounded px-3 py-1.5 border ${
+            editMode
+              ? 'bg-blue-600 text-white border-blue-600'
+              : 'bg-white text-blue-600 border-blue-300 hover:border-blue-500'
+          }`}
+        >
+          {editMode ? '完成' : '編輯'}
+        </button>
       </div>
 
       <form onSubmit={onCreate} className="flex gap-2 mb-6">
@@ -233,41 +245,50 @@ export default function MySongsPage() {
                 {song.bandIds.map((bid) => (
                   <span
                     key={bid}
-                    className="text-xs bg-emerald-100 text-emerald-700 rounded-full pl-2.5 pr-1 py-1 flex items-center gap-1"
+                    className={`text-xs bg-emerald-100 text-emerald-700 rounded-full py-1 flex items-center gap-1 ${
+                      editMode ? 'pl-2.5 pr-1' : 'px-2.5'
+                    }`}
                   >
                     {bandName(bid)}
-                    <button
-                      type="button"
-                      title="取消分享"
-                      onClick={() => void onUnshare(song.id, bid)}
-                      className="w-4 h-4 rounded-full hover:bg-emerald-200 text-emerald-600"
-                    >
-                      ×
-                    </button>
+                    {editMode && (
+                      <button
+                        type="button"
+                        title="取消分享"
+                        onClick={() => void onUnshare(song.id, bid)}
+                        className="w-4 h-4 rounded-full hover:bg-emerald-200 text-emerald-600"
+                      >
+                        ×
+                      </button>
+                    )}
                   </span>
                 ))}
-                {(() => {
-                  const avail = shareTargets.filter((b) => !song.bandIds.includes(b.id))
-                  if (avail.length === 0) {
-                    return song.bandIds.length === 0 ? (
-                      <span className="text-xs text-gray-400">個人</span>
-                    ) : null
-                  }
-                  return (
-                    <select
-                      value=""
-                      onChange={(e) => e.target.value && void onShare(song.id, e.target.value)}
-                      className="text-sm border border-gray-300 rounded px-2 py-1 bg-white text-blue-600"
-                    >
-                      <option value="">＋ 分享到樂團…</option>
-                      {avail.map((b) => (
-                        <option key={b.id} value={b.id}>
-                          {b.name}
-                        </option>
-                      ))}
-                    </select>
-                  )
-                })()}
+                {song.bandIds.length === 0 && !editMode && (
+                  <span className="text-xs text-gray-400">個人</span>
+                )}
+
+                {editMode &&
+                  (() => {
+                    const avail = shareTargets.filter((b) => !song.bandIds.includes(b.id))
+                    if (avail.length === 0) {
+                      return song.bandIds.length === 0 ? (
+                        <span className="text-xs text-gray-400">個人</span>
+                      ) : null
+                    }
+                    return (
+                      <select
+                        value=""
+                        onChange={(e) => e.target.value && void onShare(song.id, e.target.value)}
+                        className="text-sm border border-gray-300 rounded px-2 py-1 bg-white text-blue-600"
+                      >
+                        <option value="">＋ 分享到樂團…</option>
+                        {avail.map((b) => (
+                          <option key={b.id} value={b.id}>
+                            {b.name}
+                          </option>
+                        ))}
+                      </select>
+                    )
+                  })()}
 
                 <button
                   type="button"
@@ -276,13 +297,15 @@ export default function MySongsPage() {
                 >
                   檢視
                 </button>
-                <button
-                  type="button"
-                  onClick={() => void onDelete(song)}
-                  className="text-sm text-red-500 hover:text-red-700"
-                >
-                  刪除
-                </button>
+                {editMode && (
+                  <button
+                    type="button"
+                    onClick={() => void onDelete(song)}
+                    className="text-sm text-red-500 hover:text-red-700"
+                  >
+                    刪除
+                  </button>
+                )}
               </div>
             </li>
           ))}
