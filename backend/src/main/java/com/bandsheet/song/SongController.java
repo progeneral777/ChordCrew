@@ -34,9 +34,12 @@ import java.util.UUID;
 public class SongController {
 
     private final SongService songService;
+    private final com.bandsheet.song.favorite.FavoriteService favoriteService;
 
-    public SongController(SongService songService) {
+    public SongController(SongService songService,
+                          com.bandsheet.song.favorite.FavoriteService favoriteService) {
         this.songService = songService;
+        this.favoriteService = favoriteService;
     }
 
     @GetMapping("/bands/{bandId}/songs")
@@ -124,5 +127,17 @@ public class SongController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@AuthenticationPrincipal AuthUser me, @PathVariable UUID id) {
         songService.softDelete(id, me.id());
+    }
+
+    @PostMapping("/songs/{id}/favorite")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void favorite(@AuthenticationPrincipal AuthUser me, @PathVariable UUID id) {
+        favoriteService.add(me.id(), id);
+    }
+
+    @DeleteMapping("/songs/{id}/favorite")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void unfavorite(@AuthenticationPrincipal AuthUser me, @PathVariable UUID id) {
+        favoriteService.remove(me.id(), id);
     }
 }

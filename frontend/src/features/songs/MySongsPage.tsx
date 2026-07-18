@@ -3,6 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { bandsApi, apiErrorMessage, type BandSummary } from '../../api/bands'
 import { songsApi, type SongSummary } from '../../api/songs'
 import AppLayout from '../../components/AppLayout'
+import FavoriteStar from './FavoriteStar'
+import Pagination from '../../components/Pagination'
+
+const PAGE_SIZE = 10
 
 export default function MySongsPage() {
   const navigate = useNavigate()
@@ -12,6 +16,9 @@ export default function MySongsPage() {
   const [error, setError] = useState('')
   const [newTitle, setNewTitle] = useState('')
   const [creating, setCreating] = useState(false)
+  const [query, setQuery] = useState('')
+  const [onlyFav, setOnlyFav] = useState(false)
+  const [page, setPage] = useState(0)
 
   useEffect(() => {
     Promise.all([songsApi.listMine(), bandsApi.list()])
@@ -30,6 +37,29 @@ export default function MySongsPage() {
   )
   const bandName = (id: string | null) =>
     id ? (bands.find((b) => b.id === id)?.name ?? '某樂團') : null
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    return songs.filter(
+      (s) => (!q || s.title.toLowerCase().includes(q)) && (!onlyFav || s.favorite)
+    )
+  }, [songs, query, onlyFav])
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const safePage = Math.min(page, pageCount - 1)
+  const pageItems = filtered.slice(safePage * PAGE_SIZE, safePage * PAGE_SIZE + PAGE_SIZE)
+
+  useEffect(() => setPage(0), [query, onlyFav, filtered.length])
+
+  const toggleFav = async (song: SongSummary) => {
+    const next = !song.favorite
+    setSongs((prev) => prev.map((s) => (s.id === song.id ? { ...s, favorite: next } : s)))
+    try {
+      await (next ? songsApi.favorite(song.id) : songsApi.unfavorite(song.id))
+    } catch (err) {
+      setSongs((prev) => prev.map((s) => (s.id === song.id ? { ...s, favorite: !next } : s)))
+      setError(apiErrorMessage(err, '更新最愛失敗'))
+    }
+  }
 
   const onCreate = async (e: FormEvent) => {
     e.preventDefault()
@@ -107,29 +137,56 @@ export default function MySongsPage() {
         這裡是你自己建立的歌曲。可以先在這裡編輯,再「分享到樂團」讓團員一起共編。
       </p>
 
+      <div className="flex items-center gap-3 mb-4 flex-wrap">
+        <input
+          type="search"
+          placeholder="搜尋歌名…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="border border-gray-300 rounded px-3 py-1.5 text-sm bg-white w-48"
+        />
+        <button
+          type="button"
+          onClick={() => setOnlyFav((v) => !v)}
+          className={`text-sm rounded px-3 py-1.5 border ${
+            onlyFav
+              ? 'bg-amber-400 text-white border-amber-400'
+              : 'bg-white text-gray-600 border-gray-300 hover:border-amber-400'
+          }`}
+        >
+          ★ 只看最愛
+        </button>
+      </div>
+
       {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
 
       {loading ? (
         <p className="text-gray-400">載入中…</p>
-      ) : songs.length === 0 ? (
-        <p className="text-gray-400">還沒有歌曲,建立第一首吧!</p>
+      ) : filtered.length === 0 ? (
+        <p className="text-gray-400">
+          {onlyFav ? '沒有加入最愛的歌曲' : query ? '沒有符合的歌曲' : '還沒有歌曲,建立第一首吧!'}
+        </p>
       ) : (
+        <>
         <ul className="bg-white rounded-lg shadow divide-y divide-gray-100">
-          {songs.map((song) => (
+          {pageItems.map((song) => (
             <li
               key={song.id}
               className="px-5 py-3 flex items-center justify-between gap-4 hover:bg-gray-50"
             >
-              <div
-                className="min-w-0 flex-1 cursor-pointer"
-                onClick={() => navigate(`/songs/${song.id}`)}
-              >
-                <p className="font-medium text-gray-900 truncate">{song.title}</p>
-                <p className="text-sm text-gray-500 truncate">
-                  {[song.artist, song.originalKey, song.bpm && `${song.bpm} BPM`]
-                    .filter(Boolean)
-                    .join(' · ') || '—'}
-                </p>
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <FavoriteStar favorite={song.favorite} onToggle={() => void toggleFav(song)} />
+                <div
+                  className="min-w-0 flex-1 cursor-pointer"
+                  onClick={() => navigate(`/songs/${song.id}`)}
+                >
+                  <p className="font-medium text-gray-900 truncate">{song.title}</p>
+                  <p className="text-sm text-gray-500 truncate">
+                    {[song.artist, song.originalKey, song.bpm && `${song.bpm} BPM`]
+                      .filter(Boolean)
+                      .join(' · ') || '—'}
+                  </p>
+                </div>
               </div>
 
               <div className="flex items-center gap-3 shrink-0">
@@ -181,6 +238,8 @@ export default function MySongsPage() {
             </li>
           ))}
         </ul>
+        <Pagination page={safePage} pageCount={pageCount} onChange={setPage} />
+        </>
       )}
     </AppLayout>
   )

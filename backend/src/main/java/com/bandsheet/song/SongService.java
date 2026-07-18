@@ -5,6 +5,7 @@ import com.bandsheet.band.BandMember;
 import com.bandsheet.band.Role;
 import com.bandsheet.common.exception.AppException;
 import com.bandsheet.song.chord.ChordUtil;
+import com.bandsheet.song.favorite.FavoriteService;
 import com.bandsheet.song.dto.SongDtos.CreateSongRequest;
 import com.bandsheet.song.dto.SongDtos.SongDetail;
 import com.bandsheet.song.dto.SongDtos.SongSummary;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -25,13 +27,15 @@ public class SongService {
     private final SongRepository songRepository;
     private final BandAccess bandAccess;
     private final SongAccess songAccess;
+    private final FavoriteService favoriteService;
     private final ApplicationEventPublisher events;
 
-    public SongService(SongRepository songRepository, BandAccess bandAccess,
-                       SongAccess songAccess, ApplicationEventPublisher events) {
+    public SongService(SongRepository songRepository, BandAccess bandAccess, SongAccess songAccess,
+                       FavoriteService favoriteService, ApplicationEventPublisher events) {
         this.songRepository = songRepository;
         this.bandAccess = bandAccess;
         this.songAccess = songAccess;
+        this.favoriteService = favoriteService;
         this.events = events;
     }
 
@@ -40,13 +44,13 @@ public class SongService {
     @Transactional(readOnly = true)
     public List<SongSummary> list(UUID bandId, UUID userId, String query, String tag, String sort) {
         bandAccess.requireMember(bandId, userId);
-        return sortAndMap(songRepository.search(bandId, blankToNull(query)).stream(), tag, sort);
+        return toSummaries(songRepository.search(bandId, blankToNull(query)), userId, tag, sort);
     }
 
     /** 我的歌曲庫:我建立的所有歌曲(含已分享出去的)。 */
     @Transactional(readOnly = true)
     public List<SongSummary> listMine(UUID userId, String query, String tag, String sort) {
-        return sortAndMap(songRepository.searchByOwner(userId, blankToNull(query)).stream(), tag, sort);
+        return toSummaries(songRepository.searchByOwner(userId, blankToNull(query)), userId, tag, sort);
     }
 
     // --- 建立 ---
@@ -57,14 +61,14 @@ public class SongService {
         BandMember me = bandAccess.requireRole(bandId, userId, Role.EDITOR);
         Song song = newSong(userId, req);
         song.setBandId(bandId);
-        return SongMapper.toDetail(songRepository.save(song), me.getRole());
+        return SongMapper.toDetail(songRepository.save(song), me.getRole(), false);
     }
 
     /** 在「我的歌曲」建立個人歌曲(尚未分享到任何樂團)。 */
     @Transactional
     public SongDetail createPersonal(UUID userId, CreateSongRequest req) {
         Song song = newSong(userId, req);
-        return SongMapper.toDetail(songRepository.save(song), Role.OWNER);
+        return SongMapper.toDetail(songRepository.save(song), Role.OWNER, false);
     }
 
     // --- 分享 ---
@@ -76,7 +80,7 @@ public class SongService {
         songAccess.requireOwner(song, userId);
         bandAccess.requireRole(bandId, userId, Role.EDITOR);
         song.setBandId(bandId);
-        return SongMapper.toDetail(song, Role.OWNER);
+        return SongMapper.toDetail(song, Role.OWNER, favoriteService.isFavorite(userId, songId));
     }
 
     /** 取消分享,歌曲回到個人歌曲庫(需為建立者)。 */
@@ -85,7 +89,7 @@ public class SongService {
         Song song = requireSong(songId);
         songAccess.requireOwner(song, userId);
         song.setBandId(null);
-        return SongMapper.toDetail(song, Role.OWNER);
+        return SongMapper.toDetail(song, Role.OWNER, favoriteService.isFavorite(userId, songId));
     }
 
     // --- 讀取 / 更新 ---
@@ -94,7 +98,7 @@ public class SongService {
     public SongDetail get(UUID songId, UUID userId) {
         Song song = requireSong(songId);
         Role role = songAccess.requireView(song, userId);
-        return SongMapper.toDetail(song, role);
+        return SongMapper.toDetail(song, role, favoriteService.isFavorite(userId, songId));
     }
 
     @Transactional
@@ -112,7 +116,7 @@ public class SongService {
         if (req.bpm() != null) song.setBpm(req.bpm());
         if (req.timeSignature() != null) song.setTimeSignature(req.timeSignature());
         if (req.tags() != null) song.setTags(req.tags());
-        return SongMapper.toDetail(song, role);
+        return SongMapper.toDetail(song, role, favoriteService.isFavorite(userId, songId));
     }
 
     public record ContentUpdateResult(boolean conflict, String content, int revision) {}
@@ -140,7 +144,7 @@ public class SongService {
         }
         song.bumpRevision();
         events.publishEvent(new SongContentReplaced(songId, song.getContent(), song.getRevision()));
-        return SongMapper.toDetail(song, role);
+        return SongMapper.toDetail(song, role, favoriteService.isFavorite(userId, songId));
     }
 
     @Transactional
@@ -163,14 +167,17 @@ public class SongService {
         return song;
     }
 
-    private List<SongSummary> sortAndMap(Stream<Song> stream, String tag, String sort) {
+    private List<SongSummary> toSummaries(List<Song> found, UUID userId, String tag, String sort) {
+        Stream<Song> stream = found.stream();
         if (tag != null && !tag.isBlank()) {
             stream = stream.filter(s -> s.getTags() != null && s.getTags().contains(tag.trim()));
         }
         Comparator<Song> comparator = "title".equals(sort)
                 ? Comparator.comparing(Song::getTitle, String.CASE_INSENSITIVE_ORDER)
                 : Comparator.comparing(Song::getUpdatedAt).reversed();
-        return stream.sorted(comparator).map(SongMapper::toSummary).toList();
+        List<Song> ordered = stream.sorted(comparator).toList();
+        Set<UUID> fav = favoriteService.favoriteIdsAmong(userId, ordered);
+        return ordered.stream().map(s -> SongMapper.toSummary(s, fav.contains(s.getId()))).toList();
     }
 
     private static String blankToNull(String s) {

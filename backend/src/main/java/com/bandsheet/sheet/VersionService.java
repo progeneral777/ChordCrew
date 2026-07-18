@@ -12,6 +12,7 @@ import com.bandsheet.song.SongAccess;
 import com.bandsheet.song.SongMapper;
 import com.bandsheet.song.SongRepository;
 import com.bandsheet.song.dto.SongDtos.SongDetail;
+import com.bandsheet.song.favorite.FavoriteService;
 import com.bandsheet.common.event.SongContentReplaced;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -30,17 +31,20 @@ public class VersionService {
     private final SongRepository songRepository;
     private final UserRepository userRepository;
     private final SongAccess songAccess;
+    private final FavoriteService favoriteService;
     private final ApplicationEventPublisher events;
 
     public VersionService(SongVersionRepository versionRepository,
                           SongRepository songRepository,
                           UserRepository userRepository,
                           SongAccess songAccess,
+                          FavoriteService favoriteService,
                           ApplicationEventPublisher events) {
         this.versionRepository = versionRepository;
         this.songRepository = songRepository;
         this.userRepository = userRepository;
         this.songAccess = songAccess;
+        this.favoriteService = favoriteService;
         this.events = events;
     }
 
@@ -94,7 +98,7 @@ public class VersionService {
         song.bumpRevision();
         events.publishEvent(new SongContentReplaced(songId, song.getContent(), song.getRevision()));
 
-        return SongMapper.toDetail(song, role);
+        return SongMapper.toDetail(song, role, favoriteService.isFavorite(userId, songId));
     }
 
     private Song requireSong(UUID songId) {

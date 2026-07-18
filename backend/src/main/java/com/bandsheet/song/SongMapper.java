@@ -9,14 +9,14 @@ public final class SongMapper {
 
     private SongMapper() {}
 
-    public static SongSummary toSummary(Song s) {
+    public static SongSummary toSummary(Song s, boolean favorite) {
         return new SongSummary(s.getId(), s.getBandId(), s.getTitle(), s.getArtist(),
-                s.getOriginalKey(), s.getBpm(), s.getTimeSignature(), s.getTags(), s.getUpdatedAt());
+                s.getOriginalKey(), s.getBpm(), s.getTimeSignature(), s.getTags(), favorite, s.getUpdatedAt());
     }
 
-    public static SongDetail toDetail(Song s, Role myRole) {
+    public static SongDetail toDetail(Song s, Role myRole, boolean favorite) {
         return new SongDetail(s.getId(), s.getBandId(), s.getOwnerId(), s.getTitle(), s.getArtist(),
                 s.getOriginalKey(), s.getBpm(), s.getTimeSignature(), s.getTags(),
-                s.getContent(), s.getRevision(), myRole, s.getUpdatedAt());
+                s.getContent(), s.getRevision(), myRole, favorite, s.getUpdatedAt());
     }
 }

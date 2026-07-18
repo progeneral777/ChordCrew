@@ -11,6 +11,7 @@ export interface SongSummary {
   bpm: number | null
   timeSignature: string | null
   tags: string[] | null
+  favorite: boolean
   updatedAt: string
 }
 
@@ -52,4 +53,6 @@ export const songsApi = {
   transpose: (id: string, semitones: number) =>
     client.post<{ data: { song: SongDetail } }>(`/songs/${id}/transpose`, { semitones }),
   remove: (id: string) => client.delete(`/songs/${id}`),
+  favorite: (id: string) => client.post(`/songs/${id}/favorite`),
+  unfavorite: (id: string) => client.delete(`/songs/${id}/favorite`),
 }

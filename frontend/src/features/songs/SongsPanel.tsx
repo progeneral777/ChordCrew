@@ -2,11 +2,15 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { apiErrorMessage, type Role } from '../../api/bands'
 import { songsApi, type SongSummary } from '../../api/songs'
+import FavoriteStar from './FavoriteStar'
+import Pagination from '../../components/Pagination'
 
 interface SongsPanelProps {
   bandId: string
   myRole: Role
 }
+
+const PAGE_SIZE = 10
 
 export default function SongsPanel({ bandId, myRole }: SongsPanelProps) {
   const navigate = useNavigate()
@@ -23,6 +27,8 @@ export default function SongsPanel({ bandId, myRole }: SongsPanelProps) {
   const [reloadTick, setReloadTick] = useState(0)
   const [showPull, setShowPull] = useState(false)
   const [pullList, setPullList] = useState<SongSummary[]>([])
+  const [onlyFav, setOnlyFav] = useState(false)
+  const [page, setPage] = useState(0)
 
   useEffect(() => {
     setLoading(true)
@@ -40,6 +46,28 @@ export default function SongsPanel({ bandId, myRole }: SongsPanelProps) {
     () => [...new Set(songs.flatMap((s) => s.tags ?? []))].sort(),
     [songs]
   )
+
+  const filtered = useMemo(
+    () => (onlyFav ? songs.filter((s) => s.favorite) : songs),
+    [songs, onlyFav]
+  )
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const safePage = Math.min(page, pageCount - 1)
+  const pageItems = filtered.slice(safePage * PAGE_SIZE, safePage * PAGE_SIZE + PAGE_SIZE)
+
+  // 篩選條件或清單筆數變動時回到第一頁
+  useEffect(() => setPage(0), [query, tag, sort, onlyFav, filtered.length])
+
+  const toggleFav = async (song: SongSummary) => {
+    const next = !song.favorite
+    setSongs((prev) => prev.map((s) => (s.id === song.id ? { ...s, favorite: next } : s)))
+    try {
+      await (next ? songsApi.favorite(song.id) : songsApi.unfavorite(song.id))
+    } catch (err) {
+      setSongs((prev) => prev.map((s) => (s.id === song.id ? { ...s, favorite: !next } : s)))
+      setError(apiErrorMessage(err, '更新最愛失敗'))
+    }
+  }
 
   const onCreate = async (e: FormEvent) => {
     e.preventDefault()
@@ -161,6 +189,17 @@ export default function SongsPanel({ bandId, myRole }: SongsPanelProps) {
           <option value="updated">最近更新</option>
           <option value="title">歌名</option>
         </select>
+        <button
+          type="button"
+          onClick={() => setOnlyFav((v) => !v)}
+          className={`text-sm rounded px-3 py-1.5 border ${
+            onlyFav
+              ? 'bg-amber-400 text-white border-amber-400'
+              : 'bg-white text-gray-600 border-gray-300 hover:border-amber-400'
+          }`}
+        >
+          ★ 只看最愛
+        </button>
         {allTags.length > 0 && (
           <div className="flex items-center gap-1.5 flex-wrap">
             {allTags.map((t) => (
@@ -185,25 +224,33 @@ export default function SongsPanel({ bandId, myRole }: SongsPanelProps) {
 
       {loading ? (
         <p className="text-gray-400">載入中…</p>
-      ) : songs.length === 0 ? (
+      ) : filtered.length === 0 ? (
         <p className="text-gray-400">
-          {query || tag ? '沒有符合的歌曲' : '還沒有歌曲' + (canEdit ? ',建立第一首吧!' : '')}
+          {onlyFav
+            ? '沒有加入最愛的歌曲'
+            : query || tag
+              ? '沒有符合的歌曲'
+              : '還沒有歌曲' + (canEdit ? ',建立第一首吧!' : '')}
         </p>
       ) : (
+        <>
         <ul className="bg-white rounded-lg shadow divide-y divide-gray-100">
-          {songs.map((song) => (
+          {pageItems.map((song) => (
             <li
               key={song.id}
               className="px-5 py-3 flex items-center justify-between gap-4 hover:bg-gray-50 cursor-pointer"
               onClick={() => navigate(`/songs/${song.id}`)}
             >
-              <div className="min-w-0">
-                <p className="font-medium text-gray-900 truncate">{song.title}</p>
-                <p className="text-sm text-gray-500 truncate">
-                  {[song.artist, song.originalKey, song.bpm && `${song.bpm} BPM`]
-                    .filter(Boolean)
-                    .join(' · ') || '—'}
-                </p>
+              <div className="flex items-center gap-3 min-w-0">
+                <FavoriteStar favorite={song.favorite} onToggle={() => void toggleFav(song)} />
+                <div className="min-w-0">
+                  <p className="font-medium text-gray-900 truncate">{song.title}</p>
+                  <p className="text-sm text-gray-500 truncate">
+                    {[song.artist, song.originalKey, song.bpm && `${song.bpm} BPM`]
+                      .filter(Boolean)
+                      .join(' · ') || '—'}
+                  </p>
+                </div>
               </div>
               <div className="flex items-center gap-3 shrink-0">
                 {(song.tags ?? []).map((t) => (
@@ -237,6 +284,8 @@ export default function SongsPanel({ bandId, myRole }: SongsPanelProps) {
             </li>
           ))}
         </ul>
+        <Pagination page={safePage} pageCount={pageCount} onChange={setPage} />
+        </>
       )}
     </div>
   )
