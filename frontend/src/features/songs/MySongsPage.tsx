@@ -1,0 +1,187 @@
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { bandsApi, apiErrorMessage, type BandSummary } from '../../api/bands'
+import { songsApi, type SongSummary } from '../../api/songs'
+import AppLayout from '../../components/AppLayout'
+
+export default function MySongsPage() {
+  const navigate = useNavigate()
+  const [songs, setSongs] = useState<SongSummary[]>([])
+  const [bands, setBands] = useState<BandSummary[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [newTitle, setNewTitle] = useState('')
+  const [creating, setCreating] = useState(false)
+
+  useEffect(() => {
+    Promise.all([songsApi.listMine(), bandsApi.list()])
+      .then(([s, b]) => {
+        setSongs(s.data.data.songs)
+        setBands(b.data.data.bands)
+      })
+      .catch((err) => setError(apiErrorMessage(err, '無法載入我的歌曲')))
+      .finally(() => setLoading(false))
+  }, [])
+
+  // 可分享的目標樂團(需 OWNER/EDITOR)
+  const shareTargets = useMemo(
+    () => bands.filter((b) => b.myRole === 'OWNER' || b.myRole === 'EDITOR'),
+    [bands]
+  )
+  const bandName = (id: string | null) =>
+    id ? (bands.find((b) => b.id === id)?.name ?? '某樂團') : null
+
+  const onCreate = async (e: FormEvent) => {
+    e.preventDefault()
+    if (!newTitle.trim()) return
+    setCreating(true)
+    setError('')
+    try {
+      const res = await songsApi.createPersonal({ title: newTitle.trim() })
+      navigate(`/songs/${res.data.data.song.id}`)
+    } catch (err) {
+      setError(apiErrorMessage(err, '建立歌曲失敗'))
+      setCreating(false)
+    }
+  }
+
+  const replaceSong = (song: SongSummary) =>
+    setSongs((prev) => prev.map((s) => (s.id === song.id ? song : s)))
+
+  const onShare = async (songId: string, bandId: string) => {
+    setError('')
+    try {
+      const res = await songsApi.share(songId, bandId)
+      replaceSong(res.data.data.song)
+    } catch (err) {
+      setError(apiErrorMessage(err, '分享失敗'))
+    }
+  }
+
+  const onUnshare = async (songId: string) => {
+    setError('')
+    try {
+      const res = await songsApi.unshare(songId)
+      replaceSong(res.data.data.song)
+    } catch (err) {
+      setError(apiErrorMessage(err, '取消分享失敗'))
+    }
+  }
+
+  const onDelete = async (song: SongSummary) => {
+    if (!window.confirm(`確定要刪除「${song.title}」嗎?`)) return
+    setError('')
+    try {
+      await songsApi.remove(song.id)
+      setSongs((prev) => prev.filter((s) => s.id !== song.id))
+    } catch (err) {
+      setError(apiErrorMessage(err, '刪除失敗'))
+    }
+  }
+
+  return (
+    <AppLayout>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold text-gray-900">我的歌曲</h2>
+      </div>
+
+      <form onSubmit={onCreate} className="flex gap-2 mb-6">
+        <input
+          type="text"
+          placeholder="新歌曲名稱"
+          maxLength={200}
+          value={newTitle}
+          onChange={(e) => setNewTitle(e.target.value)}
+          className="flex-1 max-w-xs border border-gray-300 rounded px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <button
+          type="submit"
+          disabled={creating || !newTitle.trim()}
+          className="bg-blue-600 text-white rounded px-4 py-2 font-medium hover:bg-blue-700 disabled:opacity-50"
+        >
+          建立歌曲
+        </button>
+      </form>
+
+      <p className="text-sm text-gray-400 mb-4">
+        這裡是你自己建立的歌曲。可以先在這裡編輯,再「分享到樂團」讓團員一起共編。
+      </p>
+
+      {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
+
+      {loading ? (
+        <p className="text-gray-400">載入中…</p>
+      ) : songs.length === 0 ? (
+        <p className="text-gray-400">還沒有歌曲,建立第一首吧!</p>
+      ) : (
+        <ul className="bg-white rounded-lg shadow divide-y divide-gray-100">
+          {songs.map((song) => (
+            <li
+              key={song.id}
+              className="px-5 py-3 flex items-center justify-between gap-4 hover:bg-gray-50"
+            >
+              <div
+                className="min-w-0 flex-1 cursor-pointer"
+                onClick={() => navigate(`/songs/${song.id}`)}
+              >
+                <p className="font-medium text-gray-900 truncate">{song.title}</p>
+                <p className="text-sm text-gray-500 truncate">
+                  {[song.artist, song.originalKey, song.bpm && `${song.bpm} BPM`]
+                    .filter(Boolean)
+                    .join(' · ') || '—'}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3 shrink-0">
+                {song.bandId ? (
+                  <>
+                    <span className="text-xs bg-emerald-100 text-emerald-700 rounded-full px-2.5 py-1">
+                      已分享 · {bandName(song.bandId)}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => void onUnshare(song.id)}
+                      className="text-sm text-gray-500 hover:text-gray-800"
+                    >
+                      取消分享
+                    </button>
+                  </>
+                ) : shareTargets.length > 0 ? (
+                  <select
+                    value=""
+                    onChange={(e) => e.target.value && void onShare(song.id, e.target.value)}
+                    className="text-sm border border-gray-300 rounded px-2 py-1 bg-white text-blue-600"
+                  >
+                    <option value="">分享到樂團…</option>
+                    {shareTargets.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.name}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <span className="text-xs text-gray-400">個人</span>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => navigate(`/songs/${song.id}/view`)}
+                  className="text-sm text-blue-600 hover:underline"
+                >
+                  檢視
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void onDelete(song)}
+                  className="text-sm text-red-500 hover:text-red-700"
+                >
+                  刪除
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </AppLayout>
+  )
+}

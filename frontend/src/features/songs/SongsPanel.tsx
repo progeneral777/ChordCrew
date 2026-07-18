@@ -20,6 +20,9 @@ export default function SongsPanel({ bandId, myRole }: SongsPanelProps) {
   const [sort, setSort] = useState<'updated' | 'title'>('updated')
   const [newTitle, setNewTitle] = useState('')
   const [creating, setCreating] = useState(false)
+  const [reloadTick, setReloadTick] = useState(0)
+  const [showPull, setShowPull] = useState(false)
+  const [pullList, setPullList] = useState<SongSummary[]>([])
 
   useEffect(() => {
     setLoading(true)
@@ -31,7 +34,7 @@ export default function SongsPanel({ bandId, myRole }: SongsPanelProps) {
         .finally(() => setLoading(false))
     }, query ? 300 : 0) // 搜尋輸入 debounce
     return () => clearTimeout(timer)
-  }, [bandId, query, tag, sort])
+  }, [bandId, query, tag, sort, reloadTick])
 
   const allTags = useMemo(
     () => [...new Set(songs.flatMap((s) => s.tags ?? []))].sort(),
@@ -49,6 +52,28 @@ export default function SongsPanel({ bandId, myRole }: SongsPanelProps) {
     } catch (err) {
       setError(apiErrorMessage(err, '建立歌曲失敗'))
       setCreating(false)
+    }
+  }
+
+  const openPull = async () => {
+    setShowPull(true)
+    setError('')
+    try {
+      const res = await songsApi.listMine()
+      setPullList(res.data.data.songs.filter((s) => s.bandId === null))
+    } catch (err) {
+      setError(apiErrorMessage(err, '無法載入我的歌曲'))
+    }
+  }
+
+  const onPull = async (songId: string) => {
+    setError('')
+    try {
+      await songsApi.share(songId, bandId)
+      setShowPull(false)
+      setReloadTick((t) => t + 1)
+    } catch (err) {
+      setError(apiErrorMessage(err, '拉入失敗'))
     }
   }
 
@@ -82,7 +107,42 @@ export default function SongsPanel({ bandId, myRole }: SongsPanelProps) {
           >
             建立歌曲
           </button>
+          <button
+            type="button"
+            onClick={() => (showPull ? setShowPull(false) : void openPull())}
+            className="border border-gray-300 text-gray-700 rounded px-4 py-2 font-medium hover:bg-gray-50"
+          >
+            {showPull ? '收合' : '拉入我的歌曲'}
+          </button>
         </form>
+      )}
+
+      {canEdit && showPull && (
+        <div className="border border-gray-200 rounded-lg p-4 mb-4 bg-gray-50">
+          <p className="text-sm font-medium text-gray-700 mb-2">
+            從「我的歌曲」選一首拉進這個樂團共享:
+          </p>
+          {pullList.length === 0 ? (
+            <p className="text-sm text-gray-400">
+              沒有可拉入的個人歌曲。先到上方「我的歌曲」建立,或該歌曲已分享到其他樂團。
+            </p>
+          ) : (
+            <ul className="divide-y divide-gray-200">
+              {pullList.map((s) => (
+                <li key={s.id} className="py-2 flex items-center justify-between gap-3">
+                  <span className="text-sm text-gray-800 truncate">{s.title}</span>
+                  <button
+                    type="button"
+                    onClick={() => void onPull(s.id)}
+                    className="text-sm text-blue-600 hover:underline shrink-0"
+                  >
+                    拉入
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       )}
 
       <div className="flex items-center gap-3 mb-4 flex-wrap">

@@ -3,6 +3,8 @@ import type { Role } from './bands'
 
 export interface SongSummary {
   id: string
+  /** null = 尚未分享(個人歌曲);有值 = 已分享到該樂團 */
+  bandId: string | null
   title: string
   artist: string | null
   originalKey: string | null
@@ -13,7 +15,7 @@ export interface SongSummary {
 }
 
 export interface SongDetail extends SongSummary {
-  bandId: string
+  ownerId: string
   content: string
   revision: number
   myRole: Role
@@ -33,6 +35,15 @@ export const songsApi = {
     client.get<{ data: { songs: SongSummary[] } }>(`/bands/${bandId}/songs`, { params }),
   create: (bandId: string, input: SongMetadataInput & { title: string }) =>
     client.post<{ data: { song: SongDetail } }>(`/bands/${bandId}/songs`, input),
+  // 我的歌曲庫(個人 + 已分享出去的都算我的)
+  listMine: (params: { query?: string; tag?: string; sort?: string } = {}) =>
+    client.get<{ data: { songs: SongSummary[] } }>(`/me/songs`, { params }),
+  createPersonal: (input: SongMetadataInput & { title: string }) =>
+    client.post<{ data: { song: SongDetail } }>(`/me/songs`, input),
+  share: (id: string, bandId: string) =>
+    client.post<{ data: { song: SongDetail } }>(`/songs/${id}/share`, { bandId }),
+  unshare: (id: string) =>
+    client.post<{ data: { song: SongDetail } }>(`/songs/${id}/unshare`),
   get: (id: string) => client.get<{ data: { song: SongDetail } }>(`/songs/${id}`),
   updateMetadata: (id: string, input: SongMetadataInput) =>
     client.patch<{ data: { song: SongDetail } }>(`/songs/${id}`, input),

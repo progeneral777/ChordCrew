@@ -39,12 +39,15 @@ public final class SongDtos {
     public record TransposeRequest(
             @NotNull @Min(-11) @Max(11) Integer semitones) {}
 
+    public record ShareRequest(@NotNull UUID bandId) {}
+
+    /** bandId 為 null 表示尚未分享(個人歌曲)。 */
     public record SongSummary(
-            UUID id, String title, String artist, String originalKey,
+            UUID id, UUID bandId, String title, String artist, String originalKey,
             Integer bpm, String timeSignature, List<String> tags, Instant updatedAt) {}
 
     public record SongDetail(
-            UUID id, UUID bandId, String title, String artist, String originalKey,
+            UUID id, UUID bandId, UUID ownerId, String title, String artist, String originalKey,
             Integer bpm, String timeSignature, List<String> tags,
             String content, int revision, Role myRole, Instant updatedAt) {}
 }

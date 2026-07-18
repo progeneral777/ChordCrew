@@ -2,14 +2,14 @@ package com.bandsheet.sheet;
 
 import com.bandsheet.auth.User;
 import com.bandsheet.auth.UserRepository;
-import com.bandsheet.band.BandAccess;
-import com.bandsheet.band.BandMember;
 import com.bandsheet.band.Role;
 import com.bandsheet.common.exception.AppException;
 import com.bandsheet.sheet.dto.VersionDtos.VersionAuthor;
 import com.bandsheet.sheet.dto.VersionDtos.VersionDetail;
 import com.bandsheet.sheet.dto.VersionDtos.VersionSummary;
 import com.bandsheet.song.Song;
+import com.bandsheet.song.SongAccess;
+import com.bandsheet.song.SongMapper;
 import com.bandsheet.song.SongRepository;
 import com.bandsheet.song.dto.SongDtos.SongDetail;
 import com.bandsheet.common.event.SongContentReplaced;
@@ -29,25 +29,25 @@ public class VersionService {
     private final SongVersionRepository versionRepository;
     private final SongRepository songRepository;
     private final UserRepository userRepository;
-    private final BandAccess bandAccess;
+    private final SongAccess songAccess;
     private final ApplicationEventPublisher events;
 
     public VersionService(SongVersionRepository versionRepository,
                           SongRepository songRepository,
                           UserRepository userRepository,
-                          BandAccess bandAccess,
+                          SongAccess songAccess,
                           ApplicationEventPublisher events) {
         this.versionRepository = versionRepository;
         this.songRepository = songRepository;
         this.userRepository = userRepository;
-        this.bandAccess = bandAccess;
+        this.songAccess = songAccess;
         this.events = events;
     }
 
     @Transactional(readOnly = true)
     public List<VersionSummary> list(UUID songId, UUID userId) {
         Song song = requireSong(songId);
-        bandAccess.requireMember(song.getBandId(), userId);
+        songAccess.requireView(song, userId);
 
         List<SongVersion> versions = versionRepository.findBySongIdOrderByCreatedAtDesc(songId);
         Map<UUID, User> authors = userRepository.findAllById(
@@ -63,7 +63,7 @@ public class VersionService {
     @Transactional
     public VersionSummary create(UUID songId, UUID userId, String note) {
         Song song = requireSong(songId);
-        bandAccess.requireRole(song.getBandId(), userId, Role.EDITOR);
+        songAccess.requireEdit(song, userId);
         SongVersion version = versionRepository.save(new SongVersion(
                 songId, song.getContent() != null ? song.getContent() : "", note, userId));
         return new VersionSummary(version.getId(), version.getNote(),
@@ -73,7 +73,7 @@ public class VersionService {
     @Transactional(readOnly = true)
     public VersionDetail get(UUID songId, UUID versionId, UUID userId) {
         Song song = requireSong(songId);
-        bandAccess.requireMember(song.getBandId(), userId);
+        songAccess.requireView(song, userId);
         SongVersion version = requireVersion(songId, versionId);
         return new VersionDetail(version.getId(), version.getNote(),
                 authorOf(version.getCreatedBy()), version.getCreatedAt(), version.getContent());
@@ -82,7 +82,7 @@ public class VersionService {
     @Transactional
     public SongDetail restore(UUID songId, UUID versionId, UUID userId) {
         Song song = requireSong(songId);
-        BandMember me = bandAccess.requireRole(song.getBandId(), userId, Role.EDITOR);
+        Role role = songAccess.requireEdit(song, userId);
         SongVersion version = requireVersion(songId, versionId);
 
         // 還原前自動快照目前內容(還原本身也產生新版本)
@@ -94,9 +94,7 @@ public class VersionService {
         song.bumpRevision();
         events.publishEvent(new SongContentReplaced(songId, song.getContent(), song.getRevision()));
 
-        return new SongDetail(song.getId(), song.getBandId(), song.getTitle(), song.getArtist(),
-                song.getOriginalKey(), song.getBpm(), song.getTimeSignature(), song.getTags(),
-                song.getContent(), song.getRevision(), me.getRole(), song.getUpdatedAt());
+        return SongMapper.toDetail(song, role);
     }
 
     private Song requireSong(UUID songId) {

@@ -19,5 +19,13 @@ public interface SongRepository extends JpaRepository<Song, UUID> {
             """)
     List<Song> search(@Param("bandId") UUID bandId, @Param("q") String q);
 
+    // 個人歌曲庫:某使用者建立的所有歌曲(含已分享出去的)。
+    @Query("""
+            select s from Song s
+            where s.ownerId = :ownerId and s.deletedAt is null
+              and (:q is null or lower(s.title) like lower(concat('%', cast(:q as string), '%')))
+            """)
+    List<Song> searchByOwner(@Param("ownerId") UUID ownerId, @Param("q") String q);
+
     Optional<Song> findByIdAndDeletedAtIsNull(UUID id);
 }

@@ -315,8 +315,11 @@ export default function SongEditorPage() {
     <AppLayout>
       {/* 標題列 */}
       <div className="mb-4">
-        <Link to={`/bands/${song.bandId}`} className="text-sm text-blue-600 hover:underline">
-          ← 回樂團
+        <Link
+          to={song.bandId ? `/bands/${song.bandId}` : '/my-songs'}
+          className="text-sm text-blue-600 hover:underline"
+        >
+          {song.bandId ? '← 回樂團' : '← 我的歌曲'}
         </Link>
         <div className="flex items-center justify-between mt-1 flex-wrap gap-2">
           <div>

@@ -4,6 +4,7 @@ import com.bandsheet.auth.AuthUser;
 import com.bandsheet.common.dto.ApiResponse;
 import com.bandsheet.song.dto.SongDtos.CreateSongRequest;
 import com.bandsheet.song.dto.SongDtos.SongDetail;
+import com.bandsheet.song.dto.SongDtos.ShareRequest;
 import com.bandsheet.song.dto.SongDtos.SongSummary;
 import com.bandsheet.song.dto.SongDtos.TransposeRequest;
 import com.bandsheet.song.dto.SongDtos.UpdateContentRequest;
@@ -53,6 +54,34 @@ public class SongController {
                                                        @PathVariable UUID bandId,
                                                        @Valid @RequestBody CreateSongRequest req) {
         return ApiResponse.ok(Map.of("song", songService.create(bandId, me.id(), req)));
+    }
+
+    @GetMapping("/me/songs")
+    public ApiResponse<Map<String, List<SongSummary>>> listMine(
+            @AuthenticationPrincipal AuthUser me,
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false) String tag,
+            @RequestParam(required = false, defaultValue = "updated") String sort) {
+        return ApiResponse.ok(Map.of("songs", songService.listMine(me.id(), query, tag, sort)));
+    }
+
+    @PostMapping("/me/songs")
+    public ApiResponse<Map<String, SongDetail>> createPersonal(@AuthenticationPrincipal AuthUser me,
+                                                               @Valid @RequestBody CreateSongRequest req) {
+        return ApiResponse.ok(Map.of("song", songService.createPersonal(me.id(), req)));
+    }
+
+    @PostMapping("/songs/{id}/share")
+    public ApiResponse<Map<String, SongDetail>> share(@AuthenticationPrincipal AuthUser me,
+                                                      @PathVariable UUID id,
+                                                      @Valid @RequestBody ShareRequest req) {
+        return ApiResponse.ok(Map.of("song", songService.share(id, me.id(), req.bandId())));
+    }
+
+    @PostMapping("/songs/{id}/unshare")
+    public ApiResponse<Map<String, SongDetail>> unshare(@AuthenticationPrincipal AuthUser me,
+                                                        @PathVariable UUID id) {
+        return ApiResponse.ok(Map.of("song", songService.unshare(id, me.id())));
     }
 
     @GetMapping("/songs/{id}")

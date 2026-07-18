@@ -1,9 +1,8 @@
 package com.bandsheet.collab;
 
-import com.bandsheet.band.BandAccess;
-import com.bandsheet.band.Role;
 import com.bandsheet.common.exception.AppException;
 import com.bandsheet.song.Song;
+import com.bandsheet.song.SongAccess;
 import com.bandsheet.song.SongRepository;
 import com.bandsheet.song.chord.ChordUtil;
 import org.springframework.stereotype.Service;
@@ -15,25 +14,25 @@ import java.util.UUID;
 public class CollabService {
 
     private final SongRepository songRepository;
-    private final BandAccess bandAccess;
+    private final SongAccess songAccess;
 
-    public CollabService(SongRepository songRepository, BandAccess bandAccess) {
+    public CollabService(SongRepository songRepository, SongAccess songAccess) {
         this.songRepository = songRepository;
-        this.bandAccess = bandAccess;
+        this.songAccess = songAccess;
     }
 
-    /** 檢查使用者可讀這首歌(join 用;VIEWER 可)。 */
+    /** 檢查使用者可讀這首歌(join 用;VIEWER 可;個人歌曲僅擁有者)。 */
     @Transactional(readOnly = true)
     public void requireViewAccess(UUID songId, UUID userId) {
         Song song = requireSong(songId);
-        bandAccess.requireMember(song.getBandId(), userId);
+        songAccess.requireView(song, userId);
     }
 
-    /** 檢查使用者可編輯這首歌(lock/update 用)。 */
+    /** 檢查使用者可編輯這首歌(lock/update 用;個人歌曲僅擁有者)。 */
     @Transactional(readOnly = true)
     public void requireEditAccess(UUID songId, UUID userId) {
         Song song = requireSong(songId);
-        bandAccess.requireRole(song.getBandId(), userId, Role.EDITOR);
+        songAccess.requireEdit(song, userId);
     }
 
     public sealed interface UpdateResult {

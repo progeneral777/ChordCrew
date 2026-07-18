@@ -15,7 +15,11 @@ import java.util.UUID;
 @Table(name = "songs")
 public class Song extends BaseEntity {
 
-    @Column(name = "band_id", nullable = false)
+    @Column(name = "owner_id", nullable = false)
+    private UUID ownerId;
+
+    // 可為空:null = 個人歌曲(只在建立者的歌曲庫);設值 = 已分享到該樂團。
+    @Column(name = "band_id")
     private UUID bandId;
 
     @Column(nullable = false, length = 200)
@@ -46,13 +50,16 @@ public class Song extends BaseEntity {
 
     protected Song() {}
 
-    public Song(UUID bandId, String title) {
-        this.bandId = bandId;
+    /** 建立歌曲一律屬於某個 owner;band_id 由分享時再設定。 */
+    public Song(UUID ownerId, String title) {
+        this.ownerId = ownerId;
         this.title = title;
         this.revision = 0;
     }
 
+    public UUID getOwnerId() { return ownerId; }
     public UUID getBandId() { return bandId; }
+    public void setBandId(UUID bandId) { this.bandId = bandId; }
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
     public String getArtist() { return artist; }
