@@ -34,22 +34,26 @@ export default function SongsPanel({ bandId, myRole }: SongsPanelProps) {
     setLoading(true)
     const timer = setTimeout(() => {
       songsApi
-        .list(bandId, { query: query || undefined, tag: tag || undefined, sort })
+        .list(bandId, { query: query || undefined, sort })
         .then((res) => setSongs(res.data.data.songs))
         .catch((err) => setError(apiErrorMessage(err, '無法載入歌曲列表')))
         .finally(() => setLoading(false))
     }, query ? 300 : 0) // 搜尋輸入 debounce
     return () => clearTimeout(timer)
-  }, [bandId, query, tag, sort, reloadTick])
+  }, [bandId, query, sort, reloadTick])
 
+  // 分類選項取自搜尋結果全集(不受目前分類篩選影響,確保能切換到其他分類)
   const allTags = useMemo(
     () => [...new Set(songs.flatMap((s) => s.tags ?? []))].sort(),
     [songs]
   )
 
   const filtered = useMemo(
-    () => (onlyFav ? songs.filter((s) => s.favorite) : songs),
-    [songs, onlyFav]
+    () =>
+      songs.filter(
+        (s) => (!onlyFav || s.favorite) && (!tag || (s.tags ?? []).includes(tag))
+      ),
+    [songs, onlyFav, tag]
   )
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const safePage = Math.min(page, pageCount - 1)
@@ -201,22 +205,18 @@ export default function SongsPanel({ bandId, myRole }: SongsPanelProps) {
           ★ 只看最愛
         </button>
         {allTags.length > 0 && (
-          <div className="flex items-center gap-1.5 flex-wrap">
+          <select
+            value={tag}
+            onChange={(e) => setTag(e.target.value)}
+            className="border border-gray-300 rounded px-2 py-1.5 text-sm bg-white"
+          >
+            <option value="">全部分類</option>
             {allTags.map((t) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => setTag(tag === t ? '' : t)}
-                className={`text-xs rounded-full px-2.5 py-1 border ${
-                  tag === t
-                    ? 'bg-blue-600 text-white border-blue-600'
-                    : 'bg-white text-gray-600 border-gray-300 hover:border-blue-400'
-                }`}
-              >
+              <option key={t} value={t}>
                 {t}
-              </button>
+              </option>
             ))}
-          </div>
+          </select>
         )}
       </div>
 

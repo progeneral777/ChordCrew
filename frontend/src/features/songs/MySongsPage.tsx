@@ -17,6 +17,7 @@ export default function MySongsPage() {
   const [newTitle, setNewTitle] = useState('')
   const [creating, setCreating] = useState(false)
   const [query, setQuery] = useState('')
+  const [tag, setTag] = useState('')
   const [onlyFav, setOnlyFav] = useState(false)
   const [page, setPage] = useState(0)
 
@@ -38,17 +39,25 @@ export default function MySongsPage() {
   const bandName = (id: string | null) =>
     id ? (bands.find((b) => b.id === id)?.name ?? '某樂團') : null
 
+  const allTags = useMemo(
+    () => [...new Set(songs.flatMap((s) => s.tags ?? []))].sort(),
+    [songs]
+  )
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     return songs.filter(
-      (s) => (!q || s.title.toLowerCase().includes(q)) && (!onlyFav || s.favorite)
+      (s) =>
+        (!q || s.title.toLowerCase().includes(q)) &&
+        (!onlyFav || s.favorite) &&
+        (!tag || (s.tags ?? []).includes(tag))
     )
-  }, [songs, query, onlyFav])
+  }, [songs, query, onlyFav, tag])
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const safePage = Math.min(page, pageCount - 1)
   const pageItems = filtered.slice(safePage * PAGE_SIZE, safePage * PAGE_SIZE + PAGE_SIZE)
 
-  useEffect(() => setPage(0), [query, onlyFav, filtered.length])
+  useEffect(() => setPage(0), [query, tag, onlyFav, filtered.length])
 
   const toggleFav = async (song: SongSummary) => {
     const next = !song.favorite
@@ -145,6 +154,20 @@ export default function MySongsPage() {
           onChange={(e) => setQuery(e.target.value)}
           className="border border-gray-300 rounded px-3 py-1.5 text-sm bg-white w-48"
         />
+        {allTags.length > 0 && (
+          <select
+            value={tag}
+            onChange={(e) => setTag(e.target.value)}
+            className="border border-gray-300 rounded px-2 py-1.5 text-sm bg-white"
+          >
+            <option value="">全部分類</option>
+            {allTags.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </select>
+        )}
         <button
           type="button"
           onClick={() => setOnlyFav((v) => !v)}
@@ -164,7 +187,7 @@ export default function MySongsPage() {
         <p className="text-gray-400">載入中…</p>
       ) : filtered.length === 0 ? (
         <p className="text-gray-400">
-          {onlyFav ? '沒有加入最愛的歌曲' : query ? '沒有符合的歌曲' : '還沒有歌曲,建立第一首吧!'}
+          {onlyFav ? '沒有加入最愛的歌曲' : query || tag ? '沒有符合的歌曲' : '還沒有歌曲,建立第一首吧!'}
         </p>
       ) : (
         <>
@@ -186,6 +209,23 @@ export default function MySongsPage() {
                       .filter(Boolean)
                       .join(' · ') || '—'}
                   </p>
+                  {(song.tags ?? []).length > 0 && (
+                    <div className="flex gap-1 flex-wrap mt-1">
+                      {(song.tags ?? []).map((t) => (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setTag(t)
+                          }}
+                          className="text-xs bg-gray-100 text-gray-600 rounded-full px-2 py-0.5 hover:bg-blue-100 hover:text-blue-700"
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
