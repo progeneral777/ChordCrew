@@ -1,6 +1,60 @@
 @import "tailwindcss";
 
-body {
-  margin: 0;
-  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+@theme {
+  --font-sans: "Inter", "Noto Sans TC", system-ui, "Segoe UI", Roboto, sans-serif;
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    margin: 0;
+    font-family: var(--font-sans);
+    color: #0f172a;
+    /* 頂部一抹靛紫暈染 + 淺灰底,現代 SaaS 感 */
+    background:
+      radial-gradient(1100px 520px at 50% -260px, rgba(99, 102, 241, 0.12), transparent 70%),
+      #f8fafc;
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  /* 主要行動按鈕:靛→紫漸層 */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold text-white
+      bg-gradient-to-r from-indigo-500 to-violet-500 shadow-lg shadow-indigo-500/20
+      hover:from-indigo-600 hover:to-violet-600 hover:shadow-indigo-500/30
+      active:scale-[.98] transition disabled:opacity-50 disabled:pointer-events-none;
+  }
+  /* 次要按鈕:白底描邊 */
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium
+      text-slate-700 bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50
+      active:scale-[.98] transition disabled:opacity-50 disabled:pointer-events-none;
+  }
+  /* 幽靈按鈕:純文字 */
+  .btn-ghost {
+    @apply inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-slate-600
+      hover:bg-slate-100 transition;
+  }
+  /* 卡片 */
+  .card {
+    @apply bg-white rounded-2xl border border-slate-100 shadow-sm;
+  }
+  .card-hover {
+    @apply transition duration-200 hover:shadow-xl hover:shadow-slate-200/60 hover:-translate-y-0.5;
+  }
+  /* 輸入框 */
+  .input {
+    @apply w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900
+      placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40
+      focus:border-indigo-400 transition;
+  }
+  /* 品牌漸層文字(用在 logo/標題) */
+  .text-gradient {
+    @apply bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent;
+  }
 }

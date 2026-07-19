@@ -37,7 +37,7 @@ export default function BandListPage() {
   return (
     <AppLayout>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">我的樂團</h2>
+        <h2 className="text-2xl font-bold text-slate-900">我的樂團</h2>
       </div>
 
       <form onSubmit={onCreate} className="flex gap-2 mb-8">
@@ -47,13 +47,9 @@ export default function BandListPage() {
           maxLength={100}
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
-          className="flex-1 max-w-xs border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+          className="input flex-1 max-w-xs"
         />
-        <button
-          type="submit"
-          disabled={creating || !newName.trim()}
-          className="bg-blue-600 text-white rounded px-4 py-2 font-medium hover:bg-blue-700 disabled:opacity-50"
-        >
+        <button type="submit" disabled={creating || !newName.trim()} className="btn-primary">
           建立樂團
         </button>
       </form>
@@ -61,21 +57,23 @@ export default function BandListPage() {
       {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
 
       {loading ? (
-        <p className="text-gray-400">載入中…</p>
+        <p className="text-slate-400">載入中…</p>
       ) : bands.length === 0 ? (
-        <p className="text-gray-400">還沒有樂團,建立一個開始吧!</p>
+        <div className="card p-10 text-center text-slate-400">還沒有樂團,建立一個開始吧!</div>
       ) : (
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {bands.map((band) => (
             <li key={band.id}>
-              <Link
-                to={`/bands/${band.id}`}
-                className="block bg-white rounded-lg shadow p-5 hover:shadow-md transition-shadow"
-              >
-                <h3 className="font-semibold text-gray-900 mb-1">{band.name}</h3>
-                <p className="text-sm text-gray-500">
-                  {band.memberCount} 位成員 · 我的角色:{band.myRole}
-                </p>
+              <Link to={`/bands/${band.id}`} className="card card-hover p-5 flex items-start gap-3">
+                <span className="grid place-items-center w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white text-lg font-bold shrink-0">
+                  {band.name.charAt(0).toUpperCase()}
+                </span>
+                <div className="min-w-0">
+                  <h3 className="font-semibold text-slate-900 mb-0.5 truncate">{band.name}</h3>
+                  <p className="text-sm text-slate-500">
+                    {band.memberCount} 位成員 · {band.myRole}
+                  </p>
+                </div>
               </Link>
             </li>
           ))}

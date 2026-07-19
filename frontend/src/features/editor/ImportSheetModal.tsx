@@ -27,50 +27,50 @@ export default function ImportSheetModal({ onClose, onImport }: ImportSheetModal
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col"
+        className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
-          <h3 className="font-semibold text-gray-900">貼上匯入和弦譜</h3>
-          <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-700 text-xl leading-none">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100">
+          <h3 className="font-semibold text-slate-900">貼上匯入和弦譜</h3>
+          <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-700 text-xl leading-none">
             ×
           </button>
         </div>
 
         <div className="p-5 grid md:grid-cols-2 gap-4 overflow-auto">
           <div className="flex flex-col">
-            <span className="text-sm font-medium text-gray-700 mb-1.5">貼上原文(和弦在上、歌詞在下)</span>
+            <span className="text-sm font-medium text-slate-700 mb-1.5">貼上原文(和弦在上、歌詞在下)</span>
             <textarea
               autoFocus
               value={raw}
               onChange={(e) => setRaw(e.target.value)}
               placeholder={PLACEHOLDER}
               spellCheck={false}
-              className="flex-1 min-h-[18rem] font-mono text-sm border border-gray-300 rounded-lg p-3 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 whitespace-pre"
+              className="flex-1 min-h-[18rem] font-mono text-sm border border-slate-300 rounded-lg p-3 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500 whitespace-pre"
             />
           </div>
 
           <div className="flex flex-col">
-            <span className="text-sm font-medium text-gray-700 mb-1.5">轉換後預覽</span>
-            <div className="flex-1 min-h-[18rem] border border-gray-200 rounded-lg p-3 overflow-auto">
+            <span className="text-sm font-medium text-slate-700 mb-1.5">轉換後預覽</span>
+            <div className="flex-1 min-h-[18rem] border border-slate-200 rounded-lg p-3 overflow-auto">
               {raw.trim() ? (
                 <SheetPreview content={converted} semitones={0} capo={0} originalKey={null} />
               ) : (
-                <p className="text-gray-400 text-sm">貼上內容後,這裡會顯示對齊好的和弦譜。</p>
+                <p className="text-slate-400 text-sm">貼上內容後,這裡會顯示對齊好的和弦譜。</p>
               )}
             </div>
           </div>
         </div>
 
-        <div className="px-5 py-3 border-t border-gray-100 flex items-center justify-between gap-3">
-          <p className="text-xs text-gray-400">
+        <div className="px-5 py-3 border-t border-slate-100 flex items-center justify-between gap-3">
+          <p className="text-xs text-slate-400">
             對齊靠空白欄位計算(中文字寬 2)。若和弦位置有點偏,匯入後可再手動微調。
           </p>
           <div className="flex gap-2 shrink-0">
             <button
               type="button"
               onClick={onClose}
-              className="border border-gray-300 text-gray-600 rounded px-4 py-1.5 text-sm hover:bg-gray-50"
+              className="border border-slate-300 text-slate-600 rounded px-4 py-1.5 text-sm hover:bg-slate-50"
             >
               取消
             </button>
@@ -78,7 +78,7 @@ export default function ImportSheetModal({ onClose, onImport }: ImportSheetModal
               type="button"
               disabled={!converted.trim()}
               onClick={() => onImport(converted)}
-              className="bg-blue-600 text-white rounded px-4 py-1.5 text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+              className="btn-primary"
             >
               匯入(取代目前內容)
             </button>

@@ -84,14 +84,14 @@ export default function SongViewerPage() {
     return () => cancelAnimationFrame(raf)
   }, [scrolling, speed])
 
-  const bg = dark ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'
-  const barBg = dark ? 'bg-gray-800/95 border-gray-700' : 'bg-white/95 border-gray-200'
+  const bg = dark ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'
+  const barBg = dark ? 'bg-slate-800/95 border-slate-700' : 'bg-white/95 border-slate-200'
   const btn = `min-w-9 h-9 px-2 rounded border text-sm font-medium ${
     dark
-      ? 'border-gray-600 hover:bg-gray-700 active:bg-gray-600'
-      : 'border-gray-300 hover:bg-gray-100 active:bg-gray-200'
+      ? 'border-slate-600 hover:bg-slate-700 active:bg-slate-600'
+      : 'border-slate-300 hover:bg-slate-100 active:bg-slate-200'
   }`
-  const subtle = dark ? 'text-gray-400' : 'text-gray-500'
+  const subtle = dark ? 'text-slate-400' : 'text-slate-500'
 
   if (loading) {
     return (
@@ -103,7 +103,7 @@ export default function SongViewerPage() {
     return (
       <div className={`fixed inset-0 ${bg} flex flex-col items-center justify-center gap-3`}>
         <p className="text-red-500">{error || '找不到歌曲'}</p>
-        <Link to="/" className="text-blue-500 hover:underline text-sm">
+        <Link to="/" className="text-indigo-500 hover:underline text-sm">
           回樂團列表
         </Link>
       </div>
@@ -118,7 +118,7 @@ export default function SongViewerPage() {
     <div className={`fixed inset-0 ${bg} flex flex-col`}>
       {/* 控制列 */}
       <header className={`${barBg} border-b backdrop-blur px-3 py-2 flex items-center gap-x-3 gap-y-2 flex-wrap shrink-0`}>
-        <Link to={`/songs/${song.id}`} className="text-blue-500 hover:underline text-sm shrink-0">
+        <Link to={`/songs/${song.id}`} className="text-indigo-500 hover:underline text-sm shrink-0">
           ← 編輯
         </Link>
         <span className="font-semibold truncate max-w-40 sm:max-w-none">{song.title}</span>
@@ -151,7 +151,7 @@ export default function SongViewerPage() {
             value={capo}
             onChange={(e) => setCapo(Number(e.target.value))}
             className={`h-9 rounded border px-1.5 text-sm ${
-              dark ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-300'
+              dark ? 'bg-slate-800 border-slate-600' : 'bg-white border-slate-300'
             }`}
           >
             {[0, 1, 2, 3, 4, 5, 6, 7].map((n) => (
@@ -170,7 +170,7 @@ export default function SongViewerPage() {
           <button
             type="button"
             onClick={() => setScrolling((v) => !v)}
-            className={`${btn} ${scrolling ? (dark ? 'bg-gray-700' : 'bg-gray-200') : ''}`}
+            className={`${btn} ${scrolling ? (dark ? 'bg-slate-700' : 'bg-slate-200') : ''}`}
             aria-label={scrolling ? '暫停捲動' : '自動捲動'}
           >
             {scrolling ? '⏸' : '▶'}
@@ -182,7 +182,7 @@ export default function SongViewerPage() {
             step={5}
             value={speed}
             onChange={(e) => setSpeed(Number(e.target.value))}
-            className="w-20 sm:w-28 accent-blue-500"
+            className="w-20 sm:w-28 accent-indigo-500"
             aria-label="捲動速度"
           />
         </div>

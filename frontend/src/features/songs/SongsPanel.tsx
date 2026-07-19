@@ -130,19 +130,15 @@ export default function SongsPanel({ bandId, myRole }: SongsPanelProps) {
             maxLength={200}
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
-            className="flex-1 max-w-xs border border-gray-300 rounded px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="input flex-1 max-w-xs"
           />
-          <button
-            type="submit"
-            disabled={creating || !newTitle.trim()}
-            className="bg-blue-600 text-white rounded px-4 py-2 font-medium hover:bg-blue-700 disabled:opacity-50"
-          >
+          <button type="submit" disabled={creating || !newTitle.trim()} className="btn-primary">
             建立歌曲
           </button>
           <button
             type="button"
             onClick={() => (showPull ? setShowPull(false) : void openPull())}
-            className="border border-gray-300 text-gray-700 rounded px-4 py-2 font-medium hover:bg-gray-50"
+            className="btn-secondary"
           >
             {showPull ? '收合' : '拉入我的歌曲'}
           </button>
@@ -150,23 +146,23 @@ export default function SongsPanel({ bandId, myRole }: SongsPanelProps) {
       )}
 
       {canEdit && showPull && (
-        <div className="border border-gray-200 rounded-lg p-4 mb-4 bg-gray-50">
-          <p className="text-sm font-medium text-gray-700 mb-2">
+        <div className="card p-4 mb-4 bg-slate-50/60">
+          <p className="text-sm font-medium text-slate-700 mb-2">
             從「我的歌曲」選一首拉進這個樂團共享:
           </p>
           {pullList.length === 0 ? (
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-slate-400">
               沒有可拉入的歌曲。你的歌曲可能都已在這個樂團,或先到「我的歌曲」建立。
             </p>
           ) : (
-            <ul className="divide-y divide-gray-200">
+            <ul className="divide-y divide-slate-100">
               {pullList.map((s) => (
                 <li key={s.id} className="py-2 flex items-center justify-between gap-3">
-                  <span className="text-sm text-gray-800 truncate">{s.title}</span>
+                  <span className="text-sm text-slate-800 truncate">{s.title}</span>
                   <button
                     type="button"
                     onClick={() => void onPull(s.id)}
-                    className="text-sm text-blue-600 hover:underline shrink-0"
+                    className="text-sm text-indigo-600 hover:underline shrink-0"
                   >
                     拉入
                   </button>
@@ -183,12 +179,12 @@ export default function SongsPanel({ bandId, myRole }: SongsPanelProps) {
           placeholder="搜尋歌名…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="border border-gray-300 rounded px-3 py-1.5 text-sm bg-white w-48"
+          className="input w-48"
         />
         <select
           value={sort}
           onChange={(e) => setSort(e.target.value as 'updated' | 'title')}
-          className="border border-gray-300 rounded px-2 py-1.5 text-sm bg-white"
+          className="input w-auto"
         >
           <option value="updated">最近更新</option>
           <option value="title">歌名</option>
@@ -196,10 +192,10 @@ export default function SongsPanel({ bandId, myRole }: SongsPanelProps) {
         <button
           type="button"
           onClick={() => setOnlyFav((v) => !v)}
-          className={`text-sm rounded px-3 py-1.5 border ${
+          className={`text-sm rounded-xl px-3 py-2 border transition ${
             onlyFav
               ? 'bg-amber-400 text-white border-amber-400'
-              : 'bg-white text-gray-600 border-gray-300 hover:border-amber-400'
+              : 'bg-white text-slate-600 border-slate-200 hover:border-amber-400'
           }`}
         >
           ★ 只看最愛
@@ -208,7 +204,7 @@ export default function SongsPanel({ bandId, myRole }: SongsPanelProps) {
           <select
             value={tag}
             onChange={(e) => setTag(e.target.value)}
-            className="border border-gray-300 rounded px-2 py-1.5 text-sm bg-white"
+            className="input w-auto"
           >
             <option value="">全部分類</option>
             {allTags.map((t) => (
@@ -223,9 +219,9 @@ export default function SongsPanel({ bandId, myRole }: SongsPanelProps) {
       {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
 
       {loading ? (
-        <p className="text-gray-400">載入中…</p>
+        <p className="text-slate-400">載入中…</p>
       ) : filtered.length === 0 ? (
-        <p className="text-gray-400">
+        <p className="text-slate-400">
           {onlyFav
             ? '沒有加入最愛的歌曲'
             : query || tag
@@ -234,18 +230,18 @@ export default function SongsPanel({ bandId, myRole }: SongsPanelProps) {
         </p>
       ) : (
         <>
-        <ul className="bg-white rounded-lg shadow divide-y divide-gray-100">
+        <ul className="card divide-y divide-slate-100 overflow-hidden">
           {pageItems.map((song) => (
             <li
               key={song.id}
-              className="px-5 py-3 flex items-center justify-between gap-4 hover:bg-gray-50 cursor-pointer"
+              className="px-5 py-3 flex items-center justify-between gap-4 hover:bg-slate-50 transition cursor-pointer"
               onClick={() => navigate(`/songs/${song.id}`)}
             >
               <div className="flex items-center gap-3 min-w-0">
                 <FavoriteStar favorite={song.favorite} onToggle={() => void toggleFav(song)} />
                 <div className="min-w-0">
-                  <p className="font-medium text-gray-900 truncate">{song.title}</p>
-                  <p className="text-sm text-gray-500 truncate">
+                  <p className="font-medium text-slate-900 truncate">{song.title}</p>
+                  <p className="text-sm text-slate-500 truncate">
                     {[song.artist, song.originalKey, song.bpm && `${song.bpm} BPM`]
                       .filter(Boolean)
                       .join(' · ') || '—'}
@@ -254,7 +250,7 @@ export default function SongsPanel({ bandId, myRole }: SongsPanelProps) {
               </div>
               <div className="flex items-center gap-3 shrink-0">
                 {(song.tags ?? []).map((t) => (
-                  <span key={t} className="text-xs bg-gray-100 text-gray-600 rounded-full px-2 py-0.5">
+                  <span key={t} className="text-xs bg-slate-100 text-slate-600 rounded-full px-2 py-0.5">
                     {t}
                   </span>
                 ))}
@@ -264,7 +260,7 @@ export default function SongsPanel({ bandId, myRole }: SongsPanelProps) {
                     e.stopPropagation()
                     navigate(`/songs/${song.id}/view`)
                   }}
-                  className="text-sm text-blue-600 hover:underline"
+                  className="text-sm text-indigo-600 hover:underline"
                 >
                   檢視
                 </button>

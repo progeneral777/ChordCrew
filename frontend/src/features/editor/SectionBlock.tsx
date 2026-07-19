@@ -42,7 +42,7 @@ export default function SectionBlock({
         </span>
       )}
       {isMine && (
-        <span className="absolute -top-2 right-2 z-10 text-xs bg-blue-100 text-blue-700 rounded-full px-2 py-0.5 shadow-sm">
+        <span className="absolute -top-2 right-2 z-10 text-xs bg-indigo-100 text-indigo-700 rounded-full px-2 py-0.5 shadow-sm">
           編輯中(我)
         </span>
       )}
@@ -58,10 +58,10 @@ export default function SectionBlock({
         rows={1}
         className={`w-full font-mono text-sm border rounded-lg p-3 resize-none overflow-hidden focus:outline-none ${
           lockedByOther
-            ? 'bg-gray-200 border-gray-300 text-gray-500 cursor-not-allowed'
+            ? 'bg-slate-200 border-slate-300 text-slate-500 cursor-not-allowed'
             : isMine
-              ? 'bg-white border-blue-400 ring-2 ring-blue-100'
-              : 'bg-white border-gray-300 focus:ring-2 focus:ring-blue-500'
+              ? 'bg-white border-indigo-400 ring-2 ring-indigo-100'
+              : 'bg-white border-slate-300 focus:ring-2 focus:ring-indigo-500'
         }`}
       />
     </div>

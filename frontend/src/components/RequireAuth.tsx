@@ -8,7 +8,7 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen flex items-center justify-center text-gray-400">載入中…</div>
+      <div className="min-h-screen flex items-center justify-center text-slate-400">載入中…</div>
     )
   }
   if (status === 'anon') {

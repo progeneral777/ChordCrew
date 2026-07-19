@@ -86,28 +86,28 @@ export default function VersionSidebar({
   return (
     <>
       <aside className="fixed right-0 top-0 h-full w-80 bg-white shadow-2xl z-30 flex flex-col">
-        <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-          <h3 className="font-semibold text-gray-900">版本歷史</h3>
-          <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-700">
+        <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+          <h3 className="font-semibold text-slate-900">版本歷史</h3>
+          <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-700">
             ✕
           </button>
         </div>
 
         {canEdit && (
-          <div className="px-4 py-3 border-b border-gray-100 flex gap-2">
+          <div className="px-4 py-3 border-b border-slate-100 flex gap-2">
             <input
               type="text"
               placeholder="版本備註(選填)"
               maxLength={200}
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              className="flex-1 border border-gray-300 rounded px-2 py-1.5 text-sm"
+              className="input flex-1"
             />
             <button
               type="button"
               onClick={() => void onSnapshot()}
               disabled={saving}
-              className="bg-blue-600 text-white rounded px-3 py-1.5 text-sm font-medium hover:bg-blue-700 disabled:opacity-50 shrink-0"
+              className="btn-primary shrink-0"
             >
               儲存版本
             </button>
@@ -118,19 +118,19 @@ export default function VersionSidebar({
 
         <div className="flex-1 overflow-auto">
           {loading ? (
-            <p className="text-gray-400 text-sm p-4">載入中…</p>
+            <p className="text-slate-400 text-sm p-4">載入中…</p>
           ) : versions.length === 0 ? (
-            <p className="text-gray-400 text-sm p-4">還沒有版本快照</p>
+            <p className="text-slate-400 text-sm p-4">還沒有版本快照</p>
           ) : (
-            <ul className="divide-y divide-gray-100">
+            <ul className="divide-y divide-slate-100">
               {versions.map((v) => (
                 <li key={v.id} className="px-4 py-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">
+                      <p className="text-sm font-medium text-slate-900 truncate">
                         {v.note || '(無備註)'}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-slate-500">
                         {formatTime(v.createdAt)} · {v.createdBy.displayName}
                       </p>
                     </div>
@@ -139,7 +139,7 @@ export default function VersionSidebar({
                     <button
                       type="button"
                       onClick={() => void onPreview(v.id)}
-                      className="text-xs text-blue-600 hover:underline"
+                      className="text-xs text-indigo-600 hover:underline"
                     >
                       檢視對照
                     </button>
@@ -167,15 +167,15 @@ export default function VersionSidebar({
           onClick={() => setPreview(null)}
         >
           <div
-            className="bg-white rounded-lg shadow-xl w-full max-w-5xl max-h-[85vh] flex flex-col"
+            className="bg-white rounded-2xl shadow-xl w-full max-w-5xl max-h-[85vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
+            <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
               <div>
-                <h4 className="font-semibold text-gray-900">
+                <h4 className="font-semibold text-slate-900">
                   版本對照 — {preview.note || '(無備註)'}
                 </h4>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-slate-500">
                   {formatTime(preview.createdAt)} · {preview.createdBy.displayName}
                 </p>
               </div>
@@ -192,21 +192,21 @@ export default function VersionSidebar({
                 <button
                   type="button"
                   onClick={() => setPreview(null)}
-                  className="text-gray-400 hover:text-gray-700"
+                  className="text-slate-400 hover:text-slate-700"
                 >
                   ✕
                 </button>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-0 flex-1 overflow-hidden">
-              <div className="border-r border-gray-100 flex flex-col overflow-hidden">
-                <p className="text-xs font-medium text-gray-500 px-4 pt-3 pb-1">目前內容</p>
+              <div className="border-r border-slate-100 flex flex-col overflow-hidden">
+                <p className="text-xs font-medium text-slate-500 px-4 pt-3 pb-1">目前內容</p>
                 <pre className="flex-1 overflow-auto text-sm font-mono px-4 pb-4 whitespace-pre-wrap">
                   {currentContent}
                 </pre>
               </div>
               <div className="flex flex-col overflow-hidden">
-                <p className="text-xs font-medium text-gray-500 px-4 pt-3 pb-1">此版本內容</p>
+                <p className="text-xs font-medium text-slate-500 px-4 pt-3 pb-1">此版本內容</p>
                 <pre className="flex-1 overflow-auto text-sm font-mono px-4 pb-4 whitespace-pre-wrap">
                   {preview.content}
                 </pre>

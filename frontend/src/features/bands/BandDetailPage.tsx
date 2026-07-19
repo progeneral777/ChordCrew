@@ -43,7 +43,7 @@ export default function BandDetailPage() {
   if (loading) {
     return (
       <AppLayout>
-        <p className="text-gray-400">載入中…</p>
+        <p className="text-slate-400">載入中…</p>
       </AppLayout>
     )
   }
@@ -52,7 +52,7 @@ export default function BandDetailPage() {
     return (
       <AppLayout>
         <p className="text-red-600">{error || '找不到樂團'}</p>
-        <Link to="/" className="text-blue-600 hover:underline text-sm">
+        <Link to="/" className="text-indigo-600 hover:underline text-sm">
           回樂團列表
         </Link>
       </AppLayout>
@@ -62,11 +62,11 @@ export default function BandDetailPage() {
   return (
     <AppLayout>
       <div className="mb-6">
-        <Link to="/" className="text-sm text-blue-600 hover:underline">
+        <Link to="/" className="text-sm text-indigo-600 hover:underline">
           ← 樂團列表
         </Link>
         <div className="flex items-center justify-between mt-2">
-          <h2 className="text-2xl font-bold text-gray-900">{band.name}</h2>
+          <h2 className="text-2xl font-bold text-slate-900">{band.name}</h2>
           {band.myRole === 'OWNER' && (
             <button
               type="button"
@@ -79,7 +79,7 @@ export default function BandDetailPage() {
         </div>
       </div>
 
-      <div className="flex gap-1 border-b border-gray-200 mb-6">
+      <div className="flex gap-1 border-b border-slate-200 mb-6">
         {(
           [
             ['songs', '歌曲'],
@@ -92,8 +92,8 @@ export default function BandDetailPage() {
             onClick={() => setTab(key)}
             className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${
               tab === key
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-800'
+                ? 'border-indigo-600 text-indigo-600'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
             {label}

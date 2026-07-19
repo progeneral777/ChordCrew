@@ -32,9 +32,9 @@ export default function SheetPreview({
   const shift = semitones - capo
   const displayKey = originalKey ? transposeKey(originalKey, shift) : null
 
-  const chordColor = dark ? 'text-sky-400' : 'text-blue-600'
+  const chordColor = dark ? 'text-sky-400' : 'text-indigo-600'
   const invalidColor = dark ? 'text-red-400 bg-red-950' : 'text-red-500 bg-red-50'
-  const badgeColor = dark ? 'bg-gray-700 text-gray-200' : 'bg-gray-200 text-gray-700'
+  const badgeColor = dark ? 'bg-slate-700 text-slate-200' : 'bg-slate-200 text-slate-700'
 
   const renderChord = (chord: string, valid: boolean) => {
     if (!valid) {
@@ -99,7 +99,7 @@ export default function SheetPreview({
         </section>
       ))}
       {sheet.sections.length === 0 && (
-        <p className={`${dark ? 'text-gray-500' : 'text-gray-400'} text-sm`}>
+        <p className={`${dark ? 'text-slate-500' : 'text-slate-400'} text-sm`}>
           預覽會顯示在這裡 — 開始輸入譜面內容吧
         </p>
       )}

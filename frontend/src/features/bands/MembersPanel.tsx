@@ -65,13 +65,13 @@ export default function MembersPanel({ band, onReload }: MembersPanelProps) {
       {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
 
       {isOwner && (
-        <section className="bg-white rounded-lg shadow p-5 mb-6">
-          <h3 className="font-semibold text-gray-900 mb-3">邀請成員</h3>
+        <section className="card p-5 mb-6">
+          <h3 className="font-semibold text-slate-900 mb-3">邀請成員</h3>
           <div className="flex items-center gap-2 flex-wrap">
             <select
               value={inviteRole}
               onChange={(e) => setInviteRole(e.target.value as Role)}
-              className="border border-gray-300 rounded px-3 py-2 bg-white"
+              className="input"
             >
               <option value="EDITOR">EDITOR(可編輯)</option>
               <option value="VIEWER">VIEWER(僅檢視)</option>
@@ -79,42 +79,42 @@ export default function MembersPanel({ band, onReload }: MembersPanelProps) {
             <button
               type="button"
               onClick={() => void onCreateInvite()}
-              className="bg-blue-600 text-white rounded px-4 py-2 font-medium hover:bg-blue-700"
+              className="btn-primary"
             >
               產生邀請連結
             </button>
           </div>
           {invite && (
             <div className="mt-3 flex items-center gap-2 flex-wrap">
-              <code className="text-sm bg-gray-100 rounded px-2 py-1 break-all">
+              <code className="text-sm bg-slate-100 rounded px-2 py-1 break-all">
                 {invite.inviteUrl}
               </code>
               <button
                 type="button"
                 onClick={() => void onCopyInvite()}
-                className="text-sm text-blue-600 hover:underline shrink-0"
+                className="text-sm text-indigo-600 hover:underline shrink-0"
               >
                 {copied ? '已複製 ✓' : '複製'}
               </button>
-              <span className="text-xs text-gray-400 shrink-0">7 天內有效</span>
+              <span className="text-xs text-slate-400 shrink-0">7 天內有效</span>
             </div>
           )}
         </section>
       )}
 
-      <section className="bg-white rounded-lg shadow overflow-hidden">
-        <h3 className="font-semibold text-gray-900 px-5 py-3 border-b border-gray-100">
+      <section className="card overflow-hidden">
+        <h3 className="font-semibold text-slate-900 px-5 py-3 border-b border-slate-100">
           成員({band.members.length})
         </h3>
-        <ul className="divide-y divide-gray-100">
+        <ul className="divide-y divide-slate-100">
           {band.members.map((m) => (
             <li key={m.userId} className="px-5 py-3 flex items-center justify-between gap-4">
               <div className="min-w-0">
-                <p className="font-medium text-gray-900 truncate">
+                <p className="font-medium text-slate-900 truncate">
                   {m.displayName}
-                  {m.userId === myUserId && <span className="text-gray-400">(我)</span>}
+                  {m.userId === myUserId && <span className="text-slate-400">(我)</span>}
                 </p>
-                <p className="text-sm text-gray-500 truncate">{m.email}</p>
+                <p className="text-sm text-slate-500 truncate">{m.email}</p>
               </div>
               <div className="flex items-center gap-3 shrink-0">
                 {isOwner && m.role !== 'OWNER' ? (
@@ -122,7 +122,7 @@ export default function MembersPanel({ band, onReload }: MembersPanelProps) {
                     <select
                       value={m.role}
                       onChange={(e) => void onChangeRole(m.userId, e.target.value as Role)}
-                      className="border border-gray-300 rounded px-2 py-1 text-sm bg-white"
+                      className="input w-auto"
                     >
                       <option value="EDITOR">EDITOR</option>
                       <option value="VIEWER">VIEWER</option>
@@ -136,7 +136,7 @@ export default function MembersPanel({ band, onReload }: MembersPanelProps) {
                     </button>
                   </>
                 ) : (
-                  <span className="text-sm text-gray-500">{m.role}</span>
+                  <span className="text-sm text-slate-500">{m.role}</span>
                 )}
               </div>
             </li>

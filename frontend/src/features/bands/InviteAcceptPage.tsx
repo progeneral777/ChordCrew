@@ -18,17 +18,17 @@ export default function InviteAcceptPage() {
   }, [token, navigate])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
       <div className="text-center">
         {error ? (
           <>
             <p className="text-red-600 mb-4">{error}</p>
-            <Link to="/" className="text-blue-600 hover:underline text-sm">
+            <Link to="/" className="text-indigo-600 hover:underline text-sm">
               回樂團列表
             </Link>
           </>
         ) : (
-          <p className="text-gray-500">加入樂團中…</p>
+          <p className="text-slate-500">加入樂團中…</p>
         )}
       </div>
     </div>

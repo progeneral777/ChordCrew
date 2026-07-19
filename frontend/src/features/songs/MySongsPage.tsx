@@ -122,14 +122,14 @@ export default function MySongsPage() {
   return (
     <AppLayout>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">我的歌曲</h2>
+        <h2 className="text-2xl font-bold text-slate-900">我的歌曲</h2>
         <button
           type="button"
           onClick={() => setEditMode((v) => !v)}
-          className={`text-sm rounded px-3 py-1.5 border ${
+          className={`text-sm rounded-xl px-3 py-2 border transition ${
             editMode
-              ? 'bg-blue-600 text-white border-blue-600'
-              : 'bg-white text-blue-600 border-blue-300 hover:border-blue-500'
+              ? 'bg-indigo-600 text-white border-indigo-600'
+              : 'bg-white text-indigo-600 border-indigo-200 hover:border-indigo-400'
           }`}
         >
           {editMode ? '完成' : '編輯'}
@@ -143,18 +143,14 @@ export default function MySongsPage() {
           maxLength={200}
           value={newTitle}
           onChange={(e) => setNewTitle(e.target.value)}
-          className="flex-1 max-w-xs border border-gray-300 rounded px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="input flex-1 max-w-xs"
         />
-        <button
-          type="submit"
-          disabled={creating || !newTitle.trim()}
-          className="bg-blue-600 text-white rounded px-4 py-2 font-medium hover:bg-blue-700 disabled:opacity-50"
-        >
+        <button type="submit" disabled={creating || !newTitle.trim()} className="btn-primary">
           建立歌曲
         </button>
       </form>
 
-      <p className="text-sm text-gray-400 mb-4">
+      <p className="text-sm text-slate-400 mb-4">
         這裡是你自己建立的歌曲。可以先在這裡編輯,再「分享到樂團」讓團員一起共編。
       </p>
 
@@ -164,13 +160,13 @@ export default function MySongsPage() {
           placeholder="搜尋歌名…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="border border-gray-300 rounded px-3 py-1.5 text-sm bg-white w-48"
+          className="input w-48"
         />
         {allTags.length > 0 && (
           <select
             value={tag}
             onChange={(e) => setTag(e.target.value)}
-            className="border border-gray-300 rounded px-2 py-1.5 text-sm bg-white"
+            className="input w-auto"
           >
             <option value="">全部分類</option>
             {allTags.map((t) => (
@@ -183,10 +179,10 @@ export default function MySongsPage() {
         <button
           type="button"
           onClick={() => setOnlyFav((v) => !v)}
-          className={`text-sm rounded px-3 py-1.5 border ${
+          className={`text-sm rounded-xl px-3 py-2 border transition ${
             onlyFav
               ? 'bg-amber-400 text-white border-amber-400'
-              : 'bg-white text-gray-600 border-gray-300 hover:border-amber-400'
+              : 'bg-white text-slate-600 border-slate-200 hover:border-amber-400'
           }`}
         >
           ★ 只看最愛
@@ -196,18 +192,18 @@ export default function MySongsPage() {
       {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
 
       {loading ? (
-        <p className="text-gray-400">載入中…</p>
+        <p className="text-slate-400">載入中…</p>
       ) : filtered.length === 0 ? (
-        <p className="text-gray-400">
+        <p className="text-slate-400">
           {onlyFav ? '沒有加入最愛的歌曲' : query || tag ? '沒有符合的歌曲' : '還沒有歌曲,建立第一首吧!'}
         </p>
       ) : (
         <>
-        <ul className="bg-white rounded-lg shadow divide-y divide-gray-100">
+        <ul className="card divide-y divide-slate-100 overflow-hidden">
           {pageItems.map((song) => (
             <li
               key={song.id}
-              className="px-5 py-3 flex items-center justify-between gap-4 hover:bg-gray-50"
+              className="px-5 py-3 flex items-center justify-between gap-4 hover:bg-slate-50 transition"
             >
               <div className="flex items-center gap-3 min-w-0 flex-1">
                 <FavoriteStar favorite={song.favorite} onToggle={() => void toggleFav(song)} />
@@ -215,8 +211,8 @@ export default function MySongsPage() {
                   className="min-w-0 flex-1 cursor-pointer"
                   onClick={() => navigate(`/songs/${song.id}`)}
                 >
-                  <p className="font-medium text-gray-900 truncate">{song.title}</p>
-                  <p className="text-sm text-gray-500 truncate">
+                  <p className="font-medium text-slate-900 truncate">{song.title}</p>
+                  <p className="text-sm text-slate-500 truncate">
                     {[song.artist, song.originalKey, song.bpm && `${song.bpm} BPM`]
                       .filter(Boolean)
                       .join(' · ') || '—'}
@@ -231,7 +227,7 @@ export default function MySongsPage() {
                             e.stopPropagation()
                             setTag(t)
                           }}
-                          className="text-xs bg-gray-100 text-gray-600 rounded-full px-2 py-0.5 hover:bg-blue-100 hover:text-blue-700"
+                          className="text-xs bg-slate-100 text-slate-600 rounded-full px-2 py-0.5 hover:bg-indigo-100 hover:text-indigo-700"
                         >
                           {t}
                         </button>
@@ -263,7 +259,7 @@ export default function MySongsPage() {
                   </span>
                 ))}
                 {song.bandIds.length === 0 && !editMode && (
-                  <span className="text-xs text-gray-400">個人</span>
+                  <span className="text-xs text-slate-400">個人</span>
                 )}
 
                 {editMode &&
@@ -271,14 +267,14 @@ export default function MySongsPage() {
                     const avail = shareTargets.filter((b) => !song.bandIds.includes(b.id))
                     if (avail.length === 0) {
                       return song.bandIds.length === 0 ? (
-                        <span className="text-xs text-gray-400">個人</span>
+                        <span className="text-xs text-slate-400">個人</span>
                       ) : null
                     }
                     return (
                       <select
                         value=""
                         onChange={(e) => e.target.value && void onShare(song.id, e.target.value)}
-                        className="text-sm border border-gray-300 rounded px-2 py-1 bg-white text-blue-600"
+                        className="text-sm border border-slate-300 rounded px-2 py-1 bg-white text-indigo-600"
                       >
                         <option value="">＋ 分享到樂團…</option>
                         {avail.map((b) => (
@@ -293,7 +289,7 @@ export default function MySongsPage() {
                 <button
                   type="button"
                   onClick={() => navigate(`/songs/${song.id}/view`)}
-                  className="text-sm text-blue-600 hover:underline"
+                  className="text-sm text-indigo-600 hover:underline"
                 >
                   檢視
                 </button>

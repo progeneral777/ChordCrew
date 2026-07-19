@@ -48,7 +48,7 @@ export default function MyPlaylistsPage() {
   return (
     <AppLayout>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">我的歌單</h2>
+        <h2 className="text-2xl font-bold text-slate-900">我的歌單</h2>
       </div>
 
       <form onSubmit={onCreate} className="flex gap-2 mb-6">
@@ -58,44 +58,45 @@ export default function MyPlaylistsPage() {
           maxLength={200}
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
-          className="flex-1 max-w-sm border border-gray-300 rounded px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="input flex-1 max-w-sm"
         />
-        <button
-          type="submit"
-          disabled={creating || !newName.trim()}
-          className="bg-blue-600 text-white rounded px-4 py-2 font-medium hover:bg-blue-700 disabled:opacity-50"
-        >
+        <button type="submit" disabled={creating || !newName.trim()} className="btn-primary">
           建立歌單
         </button>
       </form>
 
-      <p className="text-sm text-gray-400 mb-4">
+      <p className="text-sm text-slate-400 mb-4">
         歌單是把你自己的歌曲挑選、排好順序的清單,適合練團或演出用。
       </p>
 
       {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
 
       {loading ? (
-        <p className="text-gray-400">載入中…</p>
+        <p className="text-slate-400">載入中…</p>
       ) : playlists.length === 0 ? (
-        <p className="text-gray-400">還沒有歌單,建立第一個吧!</p>
+        <div className="card p-10 text-center text-slate-400">還沒有歌單,建立第一個吧!</div>
       ) : (
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {playlists.map((p) => (
             <li
               key={p.id}
-              className="bg-white rounded-lg shadow p-5 hover:shadow-md transition-shadow cursor-pointer relative"
+              className="card card-hover p-5 cursor-pointer relative flex items-start gap-3"
               onClick={() => navigate(`/playlists/${p.id}`)}
             >
-              <h3 className="font-semibold text-gray-900 mb-1 pr-8 truncate">{p.name}</h3>
-              <p className="text-sm text-gray-500">{p.songCount} 首歌</p>
+              <span className="grid place-items-center w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white text-lg shrink-0">
+                ♫
+              </span>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-semibold text-slate-900 mb-0.5 pr-8 truncate">{p.name}</h3>
+                <p className="text-sm text-slate-500">{p.songCount} 首歌</p>
+              </div>
               <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation()
                   void onDelete(p)
                 }}
-                className="absolute top-3 right-3 text-sm text-red-400 hover:text-red-600"
+                className="absolute top-3 right-3 text-sm text-slate-300 hover:text-red-500"
                 title="刪除歌單"
               >
                 刪除

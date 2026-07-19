@@ -309,7 +309,7 @@ export default function SongEditorPage() {
   if (loading) {
     return (
       <AppLayout>
-        <p className="text-gray-400">載入中…</p>
+        <p className="text-slate-400">載入中…</p>
       </AppLayout>
     )
   }
@@ -318,7 +318,7 @@ export default function SongEditorPage() {
     return (
       <AppLayout>
         <p className="text-red-600">{error || '找不到歌曲'}</p>
-        <Link to="/" className="text-blue-600 hover:underline text-sm">
+        <Link to="/" className="text-indigo-600 hover:underline text-sm">
           回樂團列表
         </Link>
       </AppLayout>
@@ -334,14 +334,14 @@ export default function SongEditorPage() {
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="text-sm text-blue-600 hover:underline"
+          className="text-sm text-indigo-600 hover:underline"
         >
           ← 返回
         </button>
         <div className="flex items-center justify-between mt-1 flex-wrap gap-2">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">{song.title}</h2>
-            <p className="text-sm text-gray-500">
+            <h2 className="text-2xl font-bold text-slate-900">{song.title}</h2>
+            <p className="text-sm text-slate-500">
               {[song.artist, song.originalKey && `原調 ${song.originalKey}`, song.bpm && `${song.bpm} BPM`, song.timeSignature]
                 .filter(Boolean)
                 .join(' · ')}
@@ -355,20 +355,20 @@ export default function SongEditorPage() {
                   key={u.userId}
                   title={u.displayName}
                   className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold text-white ring-2 ring-white ${
-                    u.userId === myUserId ? 'bg-blue-600' : 'bg-emerald-500'
+                    u.userId === myUserId ? 'bg-indigo-600' : 'bg-emerald-500'
                   }`}
                 >
                   {u.displayName.charAt(0).toUpperCase()}
                 </span>
               ))}
             </div>
-            <Link to={`/songs/${song.id}/view`} className="text-sm text-blue-600 hover:underline">
+            <Link to={`/songs/${song.id}/view`} className="text-sm text-indigo-600 hover:underline">
               檢視模式
             </Link>
             <button
               type="button"
               onClick={() => setShowVersions(true)}
-              className="text-sm text-blue-600 hover:underline"
+              className="text-sm text-indigo-600 hover:underline"
             >
               版本歷史
             </button>
@@ -385,14 +385,14 @@ export default function SongEditorPage() {
 
       {/* 歌曲資訊:預設唯讀顯示,按「編輯」才能修改 */}
       {canEdit && (
-        <form onSubmit={onSaveMetadata} className="bg-white rounded-lg shadow p-4 mb-4">
+        <form onSubmit={onSaveMetadata} className="card p-4 mb-4">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-medium text-gray-700">歌曲資訊</span>
+            <span className="text-sm font-medium text-slate-700">歌曲資訊</span>
             {!editingMeta && (
               <button
                 type="button"
                 onClick={() => setEditingMeta(true)}
-                className="text-sm text-blue-600 hover:underline"
+                className="text-sm text-indigo-600 hover:underline"
               >
                 編輯
               </button>
@@ -407,7 +407,7 @@ export default function SongEditorPage() {
                 disabled={!editingMeta}
                 value={metaForm.title}
                 onChange={(e) => setMetaForm({ ...metaForm, title: e.target.value })}
-                className="mt-1 w-full border border-gray-300 rounded px-2 py-1.5 disabled:bg-gray-50 disabled:text-gray-500"
+                className="input mt-1 disabled:bg-slate-50 disabled:text-slate-400"
               />
             </label>
             <label className="text-sm">
@@ -416,7 +416,7 @@ export default function SongEditorPage() {
                 disabled={!editingMeta}
                 value={metaForm.artist}
                 onChange={(e) => setMetaForm({ ...metaForm, artist: e.target.value })}
-                className="mt-1 w-full border border-gray-300 rounded px-2 py-1.5 disabled:bg-gray-50 disabled:text-gray-500"
+                className="input mt-1 disabled:bg-slate-50 disabled:text-slate-400"
               />
             </label>
             <label className="text-sm">
@@ -425,7 +425,7 @@ export default function SongEditorPage() {
                 disabled={!editingMeta}
                 value={metaForm.originalKey}
                 onChange={(e) => setMetaForm({ ...metaForm, originalKey: e.target.value })}
-                className="mt-1 w-full border border-gray-300 rounded px-2 py-1.5 bg-white disabled:bg-gray-50 disabled:text-gray-500"
+                className="input mt-1 disabled:bg-slate-50 disabled:text-slate-400"
               >
                 <option value="">未設定</option>
                 {ALL_KEYS.flatMap((k) => [k, k + 'm']).map((k) => (
@@ -444,7 +444,7 @@ export default function SongEditorPage() {
                 disabled={!editingMeta}
                 value={metaForm.bpm}
                 onChange={(e) => setMetaForm({ ...metaForm, bpm: e.target.value })}
-                className="mt-1 w-full border border-gray-300 rounded px-2 py-1.5 disabled:bg-gray-50 disabled:text-gray-500"
+                className="input mt-1 disabled:bg-slate-50 disabled:text-slate-400"
               />
             </label>
             <label className="text-sm">
@@ -454,7 +454,7 @@ export default function SongEditorPage() {
                 disabled={!editingMeta}
                 value={metaForm.timeSignature}
                 onChange={(e) => setMetaForm({ ...metaForm, timeSignature: e.target.value })}
-                className="mt-1 w-full border border-gray-300 rounded px-2 py-1.5 disabled:bg-gray-50 disabled:text-gray-500"
+                className="input mt-1 disabled:bg-slate-50 disabled:text-slate-400"
               />
             </label>
             <label className="text-sm">
@@ -463,24 +463,17 @@ export default function SongEditorPage() {
                 disabled={!editingMeta}
                 value={metaForm.tags}
                 onChange={(e) => setMetaForm({ ...metaForm, tags: e.target.value })}
-                className="mt-1 w-full border border-gray-300 rounded px-2 py-1.5 disabled:bg-gray-50 disabled:text-gray-500"
+                className="input mt-1 disabled:bg-slate-50 disabled:text-slate-400"
               />
             </label>
           </div>
 
           {editingMeta && (
             <div className="mt-3 flex gap-2">
-              <button
-                type="submit"
-                className="bg-blue-600 text-white rounded px-4 py-1.5 text-sm hover:bg-blue-700"
-              >
+              <button type="submit" className="btn-primary">
                 儲存資訊
               </button>
-              <button
-                type="button"
-                onClick={onCancelMeta}
-                className="border border-gray-300 text-gray-600 rounded px-4 py-1.5 text-sm hover:bg-gray-50"
-              >
+              <button type="button" onClick={onCancelMeta} className="btn-secondary">
                 取消
               </button>
             </div>
@@ -489,13 +482,13 @@ export default function SongEditorPage() {
       )}
 
       {/* 移調工具列 */}
-      <div className="bg-white rounded-lg shadow px-4 py-2.5 mb-4 flex items-center gap-4 flex-wrap text-sm">
+      <div className="card px-4 py-2.5 mb-4 flex items-center gap-4 flex-wrap text-sm">
         <div className="flex items-center gap-1.5">
-          <span className="text-gray-500">移調</span>
+          <span className="text-slate-500">移調</span>
           <button
             type="button"
             onClick={() => setSemitones((v) => normalizeShift(v - 1))}
-            className="w-7 h-7 rounded border border-gray-300 hover:bg-gray-100 font-mono"
+            className="w-7 h-7 rounded border border-slate-300 hover:bg-slate-100 font-mono"
           >
             −
           </button>
@@ -505,7 +498,7 @@ export default function SongEditorPage() {
           <button
             type="button"
             onClick={() => setSemitones((v) => normalizeShift(v + 1))}
-            className="w-7 h-7 rounded border border-gray-300 hover:bg-gray-100 font-mono"
+            className="w-7 h-7 rounded border border-slate-300 hover:bg-slate-100 font-mono"
           >
             +
           </button>
@@ -513,11 +506,11 @@ export default function SongEditorPage() {
 
         {song.originalKey && (
           <div className="flex items-center gap-1.5">
-            <span className="text-gray-500">調</span>
+            <span className="text-slate-500">調</span>
             <select
               value={semitones}
               onChange={(e) => setSemitones(Number(e.target.value))}
-              className="border border-gray-300 rounded px-2 py-1 bg-white"
+              className="border border-slate-300 rounded px-2 py-1 bg-white"
             >
               {Array.from({ length: 12 }, (_, i) => normalizeShift(i))
                 .sort((a, b) => a - b)
@@ -532,11 +525,11 @@ export default function SongEditorPage() {
         )}
 
         <div className="flex items-center gap-1.5">
-          <span className="text-gray-500">Capo</span>
+          <span className="text-slate-500">Capo</span>
           <select
             value={capo}
             onChange={(e) => setCapo(Number(e.target.value))}
-            className="border border-gray-300 rounded px-2 py-1 bg-white"
+            className="border border-slate-300 rounded px-2 py-1 bg-white"
           >
             {[0, 1, 2, 3, 4, 5, 6, 7].map((n) => (
               <option key={n} value={n}>
@@ -553,7 +546,7 @@ export default function SongEditorPage() {
               setSemitones(0)
               setCapo(0)
             }}
-            className="text-gray-500 hover:text-gray-900"
+            className="text-slate-500 hover:text-slate-900"
           >
             重設
           </button>
@@ -577,7 +570,7 @@ export default function SongEditorPage() {
       <div className="grid lg:grid-cols-2 gap-4">
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between min-h-8 gap-3">
-            <span className="text-sm font-medium text-gray-700">
+            <span className="text-sm font-medium text-slate-700">
               ChordPro 原始碼(依段落編輯,他人編輯中的段落唯讀)
             </span>
             <div className="flex items-center gap-3 shrink-0">
@@ -585,7 +578,7 @@ export default function SongEditorPage() {
                 <button
                   type="button"
                   onClick={() => setShowImport(true)}
-                  className="text-sm text-blue-600 hover:underline"
+                  className="text-sm text-indigo-600 hover:underline"
                 >
                   貼上匯入
                 </button>
@@ -594,46 +587,34 @@ export default function SongEditorPage() {
                 <button
                   type="button"
                   onClick={onInsertExample}
-                  className="text-sm text-blue-600 hover:underline"
+                  className="text-sm text-indigo-600 hover:underline"
                 >
                   插入範例
                 </button>
               )}
               {canEdit &&
                 (hasPendingEdit ? (
-                  <button
-                    type="button"
-                    onClick={flushUpdate}
-                    className="bg-blue-600 text-white rounded px-4 py-1.5 text-sm font-medium hover:bg-blue-700"
-                  >
+                  <button type="button" onClick={flushUpdate} className="btn-primary">
                     儲存(⌘S)
                   </button>
                 ) : (
-                  <span className="text-sm text-green-600">✓ 已自動儲存</span>
+                  <span className="text-sm text-emerald-600">✓ 已自動儲存</span>
                 ))}
             </div>
           </div>
 
           {canEdit && !joined.trim() && (
-            <div className="border-2 border-dashed border-blue-300 rounded-lg p-4 text-sm text-blue-700 flex flex-col gap-2">
+            <div className="border-2 border-dashed border-indigo-300 rounded-lg p-4 text-sm text-indigo-700 flex flex-col gap-2">
               <span>
                 ✨ 還不知道怎麼寫?可以參考和弦與歌詞的寫法(段落標題、
-                <code className="mx-0.5 px-1 bg-blue-100 rounded">| C | G |</code> 純和弦行、
-                歌詞內的 <code className="mx-0.5 px-1 bg-blue-100 rounded">[C]和弦</code> 錨點)
+                <code className="mx-0.5 px-1 bg-indigo-100 rounded">| C | G |</code> 純和弦行、
+                歌詞內的 <code className="mx-0.5 px-1 bg-indigo-100 rounded">[C]和弦</code> 錨點)
               </span>
               <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={onInsertExample}
-                  className="bg-blue-600 text-white rounded px-3 py-1.5 hover:bg-blue-700"
-                >
+                <button type="button" onClick={onInsertExample} className="btn-primary">
                   插入範例歌曲
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setShowImport(true)}
-                  className="border border-blue-400 text-blue-700 rounded px-3 py-1.5 hover:bg-blue-50"
-                >
+                <button type="button" onClick={() => setShowImport(true)} className="btn-secondary">
                   貼上匯入
                 </button>
               </div>
@@ -654,17 +635,17 @@ export default function SongEditorPage() {
           ))}
         </div>
         <div>
-          <span className="text-sm font-medium text-gray-700 block mb-1.5">
+          <span className="text-sm font-medium text-slate-700 block mb-1.5">
             預覽
             {(semitones !== 0 || capo !== 0) && displayedKey && (
-              <span className="text-gray-400 font-normal">
+              <span className="text-slate-400 font-normal">
                 {' '}
                 — {displayedKey}
                 {capo > 0 && ` / capo ${capo}`}
               </span>
             )}
           </span>
-          <div className="bg-white border border-gray-200 rounded-lg p-4 min-h-[28rem] overflow-auto">
+          <div className="card p-4 min-h-[28rem] overflow-auto">
             <SheetPreview
               content={joined}
               semitones={semitones}

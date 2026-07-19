@@ -13,18 +13,18 @@ export default function Pagination({ page, pageCount, onChange }: PaginationProp
         type="button"
         onClick={() => onChange(page - 1)}
         disabled={page <= 0}
-        className="px-3 py-1 rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-40"
+        className="px-3 py-1 rounded border border-slate-300 hover:bg-slate-50 disabled:opacity-40"
       >
         上一頁
       </button>
-      <span className="text-gray-500">
+      <span className="text-slate-500">
         第 {page + 1} / {pageCount} 頁
       </span>
       <button
         type="button"
         onClick={() => onChange(page + 1)}
         disabled={page >= pageCount - 1}
-        className="px-3 py-1 rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-40"
+        className="px-3 py-1 rounded border border-slate-300 hover:bg-slate-50 disabled:opacity-40"
       >
         下一頁
       </button>
