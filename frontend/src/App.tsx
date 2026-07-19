@@ -5,6 +5,8 @@ import RegisterPage from './features/auth/RegisterPage'
 import BandListPage from './features/bands/BandListPage'
 import BandDetailPage from './features/bands/BandDetailPage'
 import MySongsPage from './features/songs/MySongsPage'
+import MyPlaylistsPage from './features/playlists/MyPlaylistsPage'
+import PlaylistDetailPage from './features/playlists/PlaylistDetailPage'
 import InviteAcceptPage from './features/bands/InviteAcceptPage'
 import SongEditorPage from './features/editor/SongEditorPage'
 import SongViewerPage from './features/viewer/SongViewerPage'
@@ -38,6 +40,22 @@ export default function App() {
           element={
             <RequireAuth>
               <MySongsPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/playlists"
+          element={
+            <RequireAuth>
+              <MyPlaylistsPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/playlists/:id"
+          element={
+            <RequireAuth>
+              <PlaylistDetailPage />
             </RequireAuth>
           }
         />

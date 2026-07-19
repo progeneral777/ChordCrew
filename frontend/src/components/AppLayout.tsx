@@ -25,6 +25,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                 <NavLink to="/my-songs" className={navClass}>
                   我的歌曲
                 </NavLink>
+                <NavLink to="/playlists" className={navClass}>
+                  我的歌單
+                </NavLink>
               </nav>
             )}
           </div>
