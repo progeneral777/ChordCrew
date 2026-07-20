@@ -9,11 +9,14 @@ Base URL: `/api`
 |---|---|---|---|
 | POST | /auth/register | { email, password, displayName } | { user } |
 | POST | /auth/login | { email, password } | { accessToken, user } + refresh cookie |
+| POST | /auth/google | { credential } | { accessToken, user } + refresh cookie |
 | POST | /auth/refresh | (cookie) | { accessToken } |
 | POST | /auth/logout | | 204 |
 | GET | /auth/me | | { user } |
 
 密碼規則:至少 8 字元。register email 重複回 409 `EMAIL_TAKEN`。
+
+`/auth/google` 的 `credential` 為 Google Identity Services 回傳的 ID token。後端以 Google 公鑰驗證後,依 `google_sub`→`email` 找帳號,找不到則自動建立(見 [GOOGLE_LOGIN_SETUP.md](GOOGLE_LOGIN_SETUP.md))。未設定 client id 回 503 `GOOGLE_LOGIN_DISABLED`;token 無效回 401 `GOOGLE_TOKEN_INVALID`;email 未驗證回 401 `GOOGLE_EMAIL_UNVERIFIED`。
 
 ## Bands
 | Method | Path | 說明 |

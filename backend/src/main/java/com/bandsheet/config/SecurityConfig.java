@@ -46,7 +46,7 @@ public class SecurityConfig {
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/health",
-                        "/api/auth/register", "/api/auth/login",
+                        "/api/auth/register", "/api/auth/login", "/api/auth/google",
                         "/api/auth/refresh", "/api/auth/logout",
                         "/ws/**").permitAll()  // WebSocket 握手;STOMP CONNECT 另以 JWT 驗證
                 .anyRequest().authenticated()

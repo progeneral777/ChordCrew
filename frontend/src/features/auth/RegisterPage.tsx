@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../stores/authStore'
+import GoogleSignInButton from './GoogleSignInButton'
 
 function errorMessage(err: unknown): string {
   if (err && typeof err === 'object' && 'response' in err) {
@@ -100,6 +101,13 @@ export default function RegisterPage() {
           <button type="submit" disabled={submitting} className="btn-primary w-full py-2.5">
             {submitting ? '註冊中…' : '註冊'}
           </button>
+
+          <div className="flex items-center gap-3 text-xs text-slate-400">
+            <span className="h-px flex-1 bg-slate-200" />
+            或
+            <span className="h-px flex-1 bg-slate-200" />
+          </div>
+          <GoogleSignInButton onError={setError} onSuccess={() => navigate('/')} />
         </form>
         <p className="text-center text-sm text-slate-500 mt-5">
           已經有帳號?{' '}

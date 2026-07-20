@@ -19,5 +19,8 @@ public final class AuthDtos {
             @NotBlank @Email String email,
             @NotBlank String password) {}
 
+    // credential 為 Google Identity Services 回傳的 ID token(JWT)。
+    public record GoogleLoginRequest(@NotBlank String credential) {}
+
     public record UserDto(UUID id, String email, String displayName) {}
 }

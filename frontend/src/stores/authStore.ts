@@ -8,6 +8,7 @@ interface AuthState {
   status: AuthStatus
   init: () => Promise<void>
   login: (email: string, password: string) => Promise<void>
+  loginWithGoogle: (credential: string) => Promise<void>
   register: (email: string, password: string, displayName: string) => Promise<void>
   logout: () => Promise<void>
 }
@@ -28,6 +29,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   login: async (email, password) => {
     const res = await authApi.login(email, password)
+    localStorage.setItem('accessToken', res.data.data.accessToken)
+    set({ user: res.data.data.user, status: 'authed' })
+  },
+
+  loginWithGoogle: async (credential) => {
+    const res = await authApi.googleLogin(credential)
     localStorage.setItem('accessToken', res.data.data.accessToken)
     set({ user: res.data.data.user, status: 'authed' })
   },

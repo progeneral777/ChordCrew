@@ -1,5 +1,6 @@
 package com.bandsheet.auth;
 
+import com.bandsheet.auth.dto.AuthDtos.GoogleLoginRequest;
 import com.bandsheet.auth.dto.AuthDtos.LoginRequest;
 import com.bandsheet.auth.dto.AuthDtos.RegisterRequest;
 import com.bandsheet.auth.dto.AuthDtos.UserDto;
@@ -47,6 +48,15 @@ public class AuthController {
     public ApiResponse<Map<String, Object>> login(@Valid @RequestBody LoginRequest req,
                                                   HttpServletResponse response) {
         AuthService.LoginResult result = authService.login(req);
+        response.addHeader(HttpHeaders.SET_COOKIE,
+                refreshCookie(result.refreshToken(), Duration.ofDays(refreshTokenExpiryDays)).toString());
+        return ApiResponse.ok(Map.of("accessToken", result.accessToken(), "user", result.user()));
+    }
+
+    @PostMapping("/google")
+    public ApiResponse<Map<String, Object>> google(@Valid @RequestBody GoogleLoginRequest req,
+                                                   HttpServletResponse response) {
+        AuthService.LoginResult result = authService.loginWithGoogle(req.credential());
         response.addHeader(HttpHeaders.SET_COOKIE,
                 refreshCookie(result.refreshToken(), Duration.ofDays(refreshTokenExpiryDays)).toString());
         return ApiResponse.ok(Map.of("accessToken", result.accessToken(), "user", result.user()));

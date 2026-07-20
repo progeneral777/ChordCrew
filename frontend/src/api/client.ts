@@ -13,7 +13,7 @@ client.interceptors.request.use((config) => {
 
 // On 401 (except for login/register/refresh themselves), try one silent
 // refresh via the HTTP-only cookie, then replay the original request.
-const NO_REFRESH_PATHS = ['/auth/login', '/auth/register', '/auth/refresh']
+const NO_REFRESH_PATHS = ['/auth/login', '/auth/register', '/auth/refresh', '/auth/google']
 
 client.interceptors.response.use(
   (res) => res,

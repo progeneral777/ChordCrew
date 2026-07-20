@@ -15,6 +15,9 @@ spring:
 
 app:
   frontend-base-url: ${FRONTEND_BASE_URL:http://localhost:5173}
+  google:
+    # 設定後即啟用 Google 登入;留空則 /api/auth/google 會回 503。見 docs/GOOGLE_LOGIN_SETUP.md
+    client-id: ${GOOGLE_CLIENT_ID:}
   jwt:
     secret: ${JWT_SECRET:dev-secret-key-change-in-production-256bits}
     access-token-expiry-ms: 7200000    # 2 hours

@@ -122,6 +122,29 @@ class AuthFlowTest {
     }
 
     @Test
+    @Order(8)
+    void googleLoginDisabledWhenNoClientIdConfigured() throws Exception {
+        // 測試環境未設定 app.google.client-id,故 Google 登入停用,回 503。
+        mockMvc.perform(post("/api/auth/google")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"credential":"dummy-id-token"}
+                                """))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.error.code").value("GOOGLE_LOGIN_DISABLED"));
+    }
+
+    @Test
+    @Order(9)
+    void googleLoginRequiresCredential() throws Exception {
+        mockMvc.perform(post("/api/auth/google")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"));
+    }
+
+    @Test
     @Order(7)
     void logoutClearsCookieAndInvalidatesRefreshToken() throws Exception {
         MvcResult loginResult = mockMvc.perform(post("/api/auth/login")

@@ -6,8 +6,9 @@
 | 欄位 | 型別 | 說明 |
 |------|------|------|
 | email | varchar(255) unique not null | |
-| password_hash | varchar(100) not null | BCrypt |
+| password_hash | varchar(100) nullable | BCrypt;Google 登入使用者為 null(見 GOOGLE_LOGIN_SETUP.md) |
 | display_name | varchar(50) not null | |
+| google_sub | varchar(255) unique nullable | Google 帳號唯一碼(id token 的 sub);非 Google 使用者為 null |
 
 ## bands
 | 欄位 | 型別 | 說明 |

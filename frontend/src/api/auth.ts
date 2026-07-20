@@ -11,6 +11,7 @@ export const authApi = {
     client.post('/auth/register', { email, password, displayName }),
   login: (email: string, password: string) =>
     client.post('/auth/login', { email, password }),
+  googleLogin: (credential: string) => client.post('/auth/google', { credential }),
   me: () => client.get('/auth/me'),
   logout: () => client.post('/auth/logout'),
 }
