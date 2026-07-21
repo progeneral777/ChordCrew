@@ -42,14 +42,18 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           </div>
           {user && (
             <div className="flex items-center gap-3 shrink-0">
-              <div className="flex items-center gap-2">
+              <Link
+                to="/settings"
+                title="個人設定"
+                className="flex items-center gap-2 rounded-full pr-1 hover:bg-slate-100 transition"
+              >
                 <span className="grid place-items-center w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 text-white text-sm font-semibold">
                   {initial}
                 </span>
                 <span className="hidden md:block text-sm text-slate-600 max-w-[8rem] truncate">
                   {user.displayName}
                 </span>
-              </div>
+              </Link>
               <button type="button" onClick={() => void logout()} className="btn-ghost">
                 登出
               </button>

@@ -10,6 +10,7 @@ interface AuthState {
   login: (email: string, password: string) => Promise<void>
   loginWithGoogle: (credential: string) => Promise<void>
   register: (email: string, password: string, displayName: string) => Promise<void>
+  setUser: (user: User) => void
   logout: () => Promise<void>
 }
 
@@ -43,6 +44,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     await authApi.register(email, password, displayName)
     await get().login(email, password)
   },
+
+  setUser: (user) => set({ user }),
 
   logout: async () => {
     try {

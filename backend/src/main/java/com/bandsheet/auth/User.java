@@ -42,6 +42,7 @@ public class User extends BaseEntity {
 
     public String getEmail() { return email; }
     public String getPasswordHash() { return passwordHash; }
+    public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
     public String getDisplayName() { return displayName; }
     public void setDisplayName(String displayName) { this.displayName = displayName; }
     public String getGoogleSub() { return googleSub; }

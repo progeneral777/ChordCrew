@@ -17,6 +17,7 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -119,6 +120,94 @@ class AuthFlowTest {
         mockMvc.perform(get("/api/auth/me"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.error.code").value("UNAUTHORIZED"));
+    }
+
+    @Test
+    @Order(10)
+    void updateProfileChangesDisplayName() throws Exception {
+        String token = accessTokenFor(EMAIL, PASSWORD);
+        mockMvc.perform(patch("/api/auth/profile")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"displayName":"Alice Renamed"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.user.displayName").value("Alice Renamed"))
+                .andExpect(jsonPath("$.data.user.hasPassword").value(true))
+                .andExpect(jsonPath("$.data.user.googleLinked").value(false));
+
+        mockMvc.perform(get("/api/auth/me").header("Authorization", "Bearer " + token))
+                .andExpect(jsonPath("$.data.user.displayName").value("Alice Renamed"));
+    }
+
+    @Test
+    @Order(11)
+    void changePasswordRequiresCorrectCurrentPassword() throws Exception {
+        String token = accessTokenFor(EMAIL, PASSWORD);
+        mockMvc.perform(post("/api/auth/change-password")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"currentPassword":"wrongpassword","newPassword":"newpassword123"}
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("INVALID_PASSWORD"));
+    }
+
+    @Test
+    @Order(12)
+    void changePasswordThenLoginWithNewPassword() throws Exception {
+        String token = accessTokenFor(EMAIL, PASSWORD);
+        mockMvc.perform(post("/api/auth/change-password")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"currentPassword":"%s","newPassword":"brandnewpass123"}
+                                """.formatted(PASSWORD)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"email":"%s","password":"brandnewpass123"}
+                                """.formatted(EMAIL)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @Order(13)
+    void linkGoogleDisabledWhenNoClientIdConfigured() throws Exception {
+        String token = accessTokenFor(EMAIL, "brandnewpass123");
+        mockMvc.perform(post("/api/auth/link-google")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"credential":"dummy"}
+                                """))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.error.code").value("GOOGLE_LOGIN_DISABLED"));
+    }
+
+    @Test
+    @Order(14)
+    void profileEndpointsRequireAuth() throws Exception {
+        mockMvc.perform(patch("/api/auth/profile")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"displayName\":\"x\"}"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    private String accessTokenFor(String email, String password) throws Exception {
+        MvcResult result = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"email":"%s","password":"%s"}
+                                """.formatted(email, password)))
+                .andExpect(status().isOk())
+                .andReturn();
+        return objectMapper.readTree(result.getResponse().getContentAsString())
+                .get("data").get("accessToken").asText();
     }
 
     @Test

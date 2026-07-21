@@ -7,6 +7,7 @@ import BandDetailPage from './features/bands/BandDetailPage'
 import MySongsPage from './features/songs/MySongsPage'
 import MyPlaylistsPage from './features/playlists/MyPlaylistsPage'
 import PlaylistDetailPage from './features/playlists/PlaylistDetailPage'
+import SettingsPage from './features/settings/SettingsPage'
 import InviteAcceptPage from './features/bands/InviteAcceptPage'
 import SongEditorPage from './features/editor/SongEditorPage'
 import SongViewerPage from './features/viewer/SongViewerPage'
@@ -80,6 +81,14 @@ export default function App() {
           element={
             <RequireAuth>
               <SongViewerPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <RequireAuth>
+              <SettingsPage />
             </RequireAuth>
           }
         />

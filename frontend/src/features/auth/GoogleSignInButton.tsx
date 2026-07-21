@@ -23,9 +23,17 @@ const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined
 interface Props {
   onError: (message: string) => void
   onSuccess: () => void
+  // 若提供,拿到 credential 後改呼叫這個(例如「綁定 Google」),否則預設走登入流程。
+  onCredential?: (credential: string) => Promise<void>
+  text?: 'signin_with' | 'signup_with' | 'continue_with'
 }
 
-export default function GoogleSignInButton({ onError, onSuccess }: Props) {
+export default function GoogleSignInButton({
+  onError,
+  onSuccess,
+  onCredential,
+  text = 'continue_with',
+}: Props) {
   const loginWithGoogle = useAuthStore((s) => s.loginWithGoogle)
   const ref = useRef<HTMLDivElement>(null)
   const [ready, setReady] = useState(false)
@@ -52,10 +60,10 @@ export default function GoogleSignInButton({ onError, onSuccess }: Props) {
       client_id: CLIENT_ID,
       callback: async (res) => {
         try {
-          await loginWithGoogle(res.credential)
+          await (onCredential ? onCredential(res.credential) : loginWithGoogle(res.credential))
           onSuccess()
         } catch {
-          onError('Google 登入失敗,請稍後再試')
+          onError('Google 操作失敗,請稍後再試')
         }
       },
     })
@@ -63,12 +71,12 @@ export default function GoogleSignInButton({ onError, onSuccess }: Props) {
       type: 'standard',
       theme: 'outline',
       size: 'large',
-      text: 'continue_with',
+      text,
       shape: 'pill',
       logo_alignment: 'center',
       width: 320,
     })
-  }, [ready, loginWithGoogle, onError, onSuccess])
+  }, [ready, loginWithGoogle, onCredential, onError, onSuccess, text])
 
   // 未設定 client id 時完全不顯示,避免在未設定環境出現壞掉的按鈕。
   if (!CLIENT_ID) return null

@@ -1,8 +1,11 @@
 package com.bandsheet.auth;
 
+import com.bandsheet.auth.dto.AuthDtos.ChangePasswordRequest;
 import com.bandsheet.auth.dto.AuthDtos.GoogleLoginRequest;
 import com.bandsheet.auth.dto.AuthDtos.LoginRequest;
+import com.bandsheet.auth.dto.AuthDtos.ProfileDto;
 import com.bandsheet.auth.dto.AuthDtos.RegisterRequest;
+import com.bandsheet.auth.dto.AuthDtos.UpdateProfileRequest;
 import com.bandsheet.auth.dto.AuthDtos.UserDto;
 import com.bandsheet.common.dto.ApiResponse;
 import com.bandsheet.common.exception.AppException;
@@ -14,7 +17,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -82,8 +87,35 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public ApiResponse<Map<String, UserDto>> me(@AuthenticationPrincipal AuthUser user) {
-        return ApiResponse.ok(Map.of("user", new UserDto(user.id(), user.email(), user.displayName())));
+    public ApiResponse<Map<String, ProfileDto>> me(@AuthenticationPrincipal AuthUser user) {
+        return ApiResponse.ok(Map.of("user", authService.getProfile(user.id())));
+    }
+
+    @PatchMapping("/profile")
+    public ApiResponse<Map<String, ProfileDto>> updateProfile(
+            @AuthenticationPrincipal AuthUser user,
+            @Valid @RequestBody UpdateProfileRequest req) {
+        return ApiResponse.ok(Map.of("user", authService.updateProfile(user.id(), req.displayName())));
+    }
+
+    @PostMapping("/change-password")
+    public ApiResponse<Map<String, ProfileDto>> changePassword(
+            @AuthenticationPrincipal AuthUser user,
+            @Valid @RequestBody ChangePasswordRequest req) {
+        return ApiResponse.ok(Map.of("user",
+                authService.changePassword(user.id(), req.currentPassword(), req.newPassword())));
+    }
+
+    @PostMapping("/link-google")
+    public ApiResponse<Map<String, ProfileDto>> linkGoogle(
+            @AuthenticationPrincipal AuthUser user,
+            @Valid @RequestBody GoogleLoginRequest req) {
+        return ApiResponse.ok(Map.of("user", authService.linkGoogle(user.id(), req.credential())));
+    }
+
+    @DeleteMapping("/link-google")
+    public ApiResponse<Map<String, ProfileDto>> unlinkGoogle(@AuthenticationPrincipal AuthUser user) {
+        return ApiResponse.ok(Map.of("user", authService.unlinkGoogle(user.id())));
     }
 
     private ResponseCookie refreshCookie(String value, Duration maxAge) {

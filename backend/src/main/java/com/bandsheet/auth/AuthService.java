@@ -1,8 +1,11 @@
 package com.bandsheet.auth;
 
 import com.bandsheet.auth.dto.AuthDtos.LoginRequest;
+import com.bandsheet.auth.dto.AuthDtos.ProfileDto;
 import com.bandsheet.auth.dto.AuthDtos.RegisterRequest;
 import com.bandsheet.auth.dto.AuthDtos.UserDto;
+
+import java.util.UUID;
 import com.bandsheet.common.exception.AppException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -122,8 +125,70 @@ public class AuthService {
         refreshTokenRepository.deleteByTokenHash(sha256(rawToken));
     }
 
+    // --- 個人設定(需登入)---
+
+    @Transactional(readOnly = true)
+    public ProfileDto getProfile(UUID userId) {
+        return toProfileDto(loadUser(userId));
+    }
+
+    @Transactional
+    public ProfileDto updateProfile(UUID userId, String displayName) {
+        User user = loadUser(userId);
+        user.setDisplayName(displayName.trim());
+        return toProfileDto(user);
+    }
+
+    @Transactional
+    public ProfileDto changePassword(UUID userId, String currentPassword, String newPassword) {
+        User user = loadUser(userId);
+        // 已有本地密碼者:需驗證目前密碼;僅以 Google 登入者:首次設定密碼免驗證。
+        if (user.getPasswordHash() != null) {
+            if (currentPassword == null || !passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
+                throw new AppException("INVALID_PASSWORD", "目前密碼不正確", HttpStatus.BAD_REQUEST);
+            }
+        }
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        return toProfileDto(user);
+    }
+
+    @Transactional
+    public ProfileDto linkGoogle(UUID userId, String credential) {
+        GoogleTokenVerifier.GooglePayload payload = googleTokenVerifier.verify(credential);
+        userRepository.findByGoogleSub(payload.sub()).ifPresent(other -> {
+            if (!other.getId().equals(userId)) {
+                throw AppException.conflict("GOOGLE_ALREADY_LINKED", "此 Google 帳號已綁定其他使用者");
+            }
+        });
+        User user = loadUser(userId);
+        user.setGoogleSub(payload.sub());
+        return toProfileDto(user);
+    }
+
+    @Transactional
+    public ProfileDto unlinkGoogle(UUID userId) {
+        User user = loadUser(userId);
+        // 避免把唯一的登入方式移除(沒有密碼又解除 Google 會無法再登入)。
+        if (user.getPasswordHash() == null) {
+            throw new AppException("CANNOT_UNLINK_GOOGLE",
+                    "請先設定密碼,才能解除 Google 綁定", HttpStatus.BAD_REQUEST);
+        }
+        user.setGoogleSub(null);
+        return toProfileDto(user);
+    }
+
+    private User loadUser(UUID userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new AppException("UNAUTHORIZED", "使用者不存在", HttpStatus.UNAUTHORIZED));
+    }
+
     private UserDto toDto(User user) {
         return new UserDto(user.getId(), user.getEmail(), user.getDisplayName());
+    }
+
+    private ProfileDto toProfileDto(User user) {
+        return new ProfileDto(user.getId(), user.getEmail(), user.getDisplayName(),
+                user.getPasswordHash() != null, user.getGoogleSub() != null);
     }
 
     private String generateRawToken() {
