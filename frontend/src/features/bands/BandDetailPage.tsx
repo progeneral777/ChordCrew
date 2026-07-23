@@ -34,7 +34,7 @@ export default function BandDetailPage() {
     if (!window.confirm(`確定要刪除「${band.name}」嗎?此操作無法復原。`)) return
     try {
       await bandsApi.remove(id)
-      navigate('/')
+      navigate('/bands')
     } catch (err) {
       setError(apiErrorMessage(err, '刪除樂團失敗'))
     }
@@ -52,7 +52,7 @@ export default function BandDetailPage() {
     return (
       <AppLayout>
         <p className="text-red-600">{error || '找不到樂團'}</p>
-        <Link to="/" className="text-indigo-600 hover:underline text-sm">
+        <Link to="/bands" className="text-indigo-600 hover:underline text-sm">
           回樂團列表
         </Link>
       </AppLayout>
@@ -62,7 +62,7 @@ export default function BandDetailPage() {
   return (
     <AppLayout>
       <div className="mb-6">
-        <Link to="/" className="text-sm text-indigo-600 hover:underline">
+        <Link to="/bands" className="text-sm text-indigo-600 hover:underline">
           ← 樂團列表
         </Link>
         <div className="flex items-center justify-between mt-2">

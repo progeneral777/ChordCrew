@@ -23,7 +23,7 @@ export default function InviteAcceptPage() {
         {error ? (
           <>
             <p className="text-red-600 mb-4">{error}</p>
-            <Link to="/" className="text-indigo-600 hover:underline text-sm">
+            <Link to="/bands" className="text-indigo-600 hover:underline text-sm">
               回樂團列表
             </Link>
           </>

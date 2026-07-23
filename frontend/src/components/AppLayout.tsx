@@ -29,7 +29,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             {user && (
               <nav className="hidden sm:flex items-center gap-1">
                 <NavLink to="/" end className={navClass}>
-                  我的樂團
+                  探索
                 </NavLink>
                 <NavLink to="/my-songs" className={navClass}>
                   我的歌曲
@@ -37,8 +37,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                 <NavLink to="/playlists" className={navClass}>
                   我的歌單
                 </NavLink>
-                <NavLink to="/explore" className={navClass}>
-                  探索
+                <NavLink to="/bands" className={navClass}>
+                  我的樂團
                 </NavLink>
               </nav>
             )}
@@ -67,7 +67,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         {user && (
           <nav className="sm:hidden flex items-center gap-1 px-4 pb-2 overflow-x-auto">
             <NavLink to="/" end className={navClass}>
-              我的樂團
+              探索
             </NavLink>
             <NavLink to="/my-songs" className={navClass}>
               我的歌曲
@@ -75,8 +75,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             <NavLink to="/playlists" className={navClass}>
               我的歌單
             </NavLink>
-            <NavLink to="/explore" className={navClass}>
-              探索
+            <NavLink to="/bands" className={navClass}>
+              我的樂團
             </NavLink>
           </nav>
         )}

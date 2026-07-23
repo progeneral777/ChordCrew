@@ -318,7 +318,7 @@ export default function SongEditorPage() {
     return (
       <AppLayout>
         <p className="text-red-600">{error || '找不到歌曲'}</p>
-        <Link to="/" className="text-indigo-600 hover:underline text-sm">
+        <Link to="/bands" className="text-indigo-600 hover:underline text-sm">
           回樂團列表
         </Link>
       </AppLayout>

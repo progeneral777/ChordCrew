@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { apiErrorMessage } from '../../api/bands'
 import { songsApi, type SongDetail } from '../../api/songs'
 import { transposeKey } from '../../lib/chord'
@@ -31,6 +31,13 @@ function usePersisted(key: string, initial: number): [number, (v: number) => voi
 
 export default function SongViewerPage() {
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
+
+  // 回上一頁;若是直接開啟(無瀏覽紀錄)則退回首頁,避免離開 App。
+  const goBack = () => {
+    if (window.history.length > 1) navigate(-1)
+    else navigate('/')
+  }
 
   const [song, setSong] = useState<SongDetail | null>(null)
   const [loading, setLoading] = useState(true)
@@ -103,7 +110,7 @@ export default function SongViewerPage() {
     return (
       <div className={`fixed inset-0 ${bg} flex flex-col items-center justify-center gap-3`}>
         <p className="text-red-500">{error || '找不到歌曲'}</p>
-        <Link to="/" className="text-indigo-500 hover:underline text-sm">
+        <Link to="/bands" className="text-indigo-500 hover:underline text-sm">
           回樂團列表
         </Link>
       </div>
@@ -118,9 +125,13 @@ export default function SongViewerPage() {
     <div className={`fixed inset-0 ${bg} flex flex-col`}>
       {/* 控制列 */}
       <header className={`${barBg} border-b backdrop-blur px-3 py-2 flex items-center gap-x-3 gap-y-2 flex-wrap shrink-0`}>
-        <Link to={`/songs/${song.id}`} className="text-indigo-500 hover:underline text-sm shrink-0">
-          ← 編輯
-        </Link>
+        <button
+          type="button"
+          onClick={goBack}
+          className="text-indigo-500 hover:underline text-sm shrink-0"
+        >
+          ← 上一頁
+        </button>
         <span className="font-semibold truncate max-w-40 sm:max-w-none">{song.title}</span>
 
         <div className="flex items-center gap-1.5 ml-auto">

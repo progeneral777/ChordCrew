@@ -33,6 +33,14 @@ export default function App() {
           path="/"
           element={
             <RequireAuth>
+              <PublicSongsPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/bands"
+          element={
+            <RequireAuth>
               <BandListPage />
             </RequireAuth>
           }
@@ -82,14 +90,6 @@ export default function App() {
           element={
             <RequireAuth>
               <SongViewerPage />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/explore"
-          element={
-            <RequireAuth>
-              <PublicSongsPage />
             </RequireAuth>
           }
         />
