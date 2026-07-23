@@ -1,0 +1,31 @@
+name: Deploy (Self-Hosted)
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy with Docker Compose
+        run: |
+          docker compose -f docker-compose.yml build --pull
+          docker compose -f docker-compose.yml up -d --force-recreate
+
+      - name: Wait for backend health
+        run: |
+          for i in $(seq 1 30); do
+            if docker compose exec -T backend bash -c ':> /dev/tcp/127.0.0.1/8080' 2>/dev/null; then
+              echo "Backend is up."
+              exit 0
+            fi
+            echo "Waiting for backend..."
+            sleep 2
+          done
+          echo "Backend did not become healthy in time."
+          exit 1

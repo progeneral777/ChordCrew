@@ -1,12 +1,14 @@
 services:
   db:
     image: postgres:16
+    restart: unless-stopped
     environment:
       POSTGRES_DB: bandsheet
       POSTGRES_USER: bandsheet
       POSTGRES_PASSWORD: bandsheet
     ports:
-      - "5432:5432"
+      # 只給 host 除錯用(psql 127.0.0.1),不對外網介面開放
+      - "127.0.0.1:5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -17,6 +19,7 @@ services:
 
   backend:
     build: ./backend
+    restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
@@ -31,8 +34,8 @@ services:
       # Google 登入:從 host 環境或 .env 帶入(留空則停用)。見 docs/GOOGLE_LOGIN_SETUP.md
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
     ports:
-      # host 8090(本機 8080 常被占用);容器間仍走 backend:8080
-      - "8090:8080"
+      # 只給 host 除錯用;對外一律走 nginx -> frontend
+      - "127.0.0.1:8090:8080"
     healthcheck:
       # JRE image 沒有 curl,用 bash /dev/tcp 檢查埠是否就緒(Tomcat 就緒才開埠)
       test: ["CMD-SHELL", "bash -c ':> /dev/tcp/127.0.0.1/8080' || exit 1"]
@@ -47,6 +50,7 @@ services:
       args:
         # Vite 建置期變數:必須與 backend 的 GOOGLE_CLIENT_ID 為同一個。見 docs/GOOGLE_LOGIN_SETUP.md
         VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+    restart: unless-stopped
     depends_on:
       backend:
         condition: service_healthy
