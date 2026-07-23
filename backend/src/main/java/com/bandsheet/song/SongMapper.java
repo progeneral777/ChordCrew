@@ -14,12 +14,13 @@ public final class SongMapper {
 
     public static SongSummary toSummary(Song s, List<UUID> bandIds, boolean favorite) {
         return new SongSummary(s.getId(), bandIds, s.getTitle(), s.getArtist(),
-                s.getOriginalKey(), s.getBpm(), s.getTimeSignature(), s.getTags(), favorite, s.getUpdatedAt());
+                s.getOriginalKey(), s.getBpm(), s.getTimeSignature(), s.getTags(), favorite,
+                s.isPublic(), s.getUpdatedAt());
     }
 
     public static SongDetail toDetail(Song s, List<UUID> bandIds, Role myRole, boolean favorite) {
         return new SongDetail(s.getId(), bandIds, s.getOwnerId(), s.getTitle(), s.getArtist(),
                 s.getOriginalKey(), s.getBpm(), s.getTimeSignature(), s.getTags(),
-                s.getContent(), s.getRevision(), myRole, favorite, s.getUpdatedAt());
+                s.getContent(), s.getRevision(), myRole, favorite, s.isPublic(), s.getUpdatedAt());
     }
 }

@@ -41,13 +41,17 @@ public final class SongDtos {
 
     public record ShareRequest(@NotNull UUID bandId) {}
 
+    public record SetPublicRequest(@NotNull Boolean isPublic) {}
+
     /** bandIds 為已分享到的樂團(可多個;空 = 個人歌曲);favorite 為目前使用者是否加入最愛。 */
     public record SongSummary(
             UUID id, List<UUID> bandIds, String title, String artist, String originalKey,
-            Integer bpm, String timeSignature, List<String> tags, boolean favorite, Instant updatedAt) {}
+            Integer bpm, String timeSignature, List<String> tags, boolean favorite,
+            boolean isPublic, Instant updatedAt) {}
 
     public record SongDetail(
             UUID id, List<UUID> bandIds, UUID ownerId, String title, String artist, String originalKey,
             Integer bpm, String timeSignature, List<String> tags,
-            String content, int revision, Role myRole, boolean favorite, Instant updatedAt) {}
+            String content, int revision, Role myRole, boolean favorite,
+            boolean isPublic, Instant updatedAt) {}
 }

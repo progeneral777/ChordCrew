@@ -3,6 +3,7 @@ package com.bandsheet.song;
 import com.bandsheet.auth.AuthUser;
 import com.bandsheet.common.dto.ApiResponse;
 import com.bandsheet.song.dto.SongDtos.CreateSongRequest;
+import com.bandsheet.song.dto.SongDtos.SetPublicRequest;
 import com.bandsheet.song.dto.SongDtos.SongDetail;
 import com.bandsheet.song.dto.SongDtos.ShareRequest;
 import com.bandsheet.song.dto.SongDtos.SongSummary;
@@ -72,6 +73,22 @@ public class SongController {
     public ApiResponse<Map<String, SongDetail>> createPersonal(@AuthenticationPrincipal AuthUser me,
                                                                @Valid @RequestBody CreateSongRequest req) {
         return ApiResponse.ok(Map.of("song", songService.createPersonal(me.id(), req)));
+    }
+
+    @GetMapping("/public/songs")
+    public ApiResponse<Map<String, List<SongSummary>>> listPublic(
+            @AuthenticationPrincipal AuthUser me,
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false) String tag,
+            @RequestParam(required = false, defaultValue = "updated") String sort) {
+        return ApiResponse.ok(Map.of("songs", songService.listPublic(me.id(), query, tag, sort)));
+    }
+
+    @PatchMapping("/songs/{id}/public")
+    public ApiResponse<Map<String, SongDetail>> setPublic(@AuthenticationPrincipal AuthUser me,
+                                                          @PathVariable UUID id,
+                                                          @Valid @RequestBody SetPublicRequest req) {
+        return ApiResponse.ok(Map.of("song", songService.setPublic(id, me.id(), req.isPublic())));
     }
 
     @PostMapping("/songs/{id}/share")

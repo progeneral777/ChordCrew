@@ -12,6 +12,8 @@ export interface SongSummary {
   timeSignature: string | null
   tags: string[] | null
   favorite: boolean
+  /** 公開歌曲:任何登入者可在「探索」看到並檢視(唯讀) */
+  isPublic: boolean
   updatedAt: string
 }
 
@@ -39,6 +41,11 @@ export const songsApi = {
   // 我的歌曲庫(個人 + 已分享出去的都算我的)
   listMine: (params: { query?: string; tag?: string; sort?: string } = {}) =>
     client.get<{ data: { songs: SongSummary[] } }>(`/me/songs`, { params }),
+  // 探索:所有公開歌曲
+  listPublic: (params: { query?: string; tag?: string; sort?: string } = {}) =>
+    client.get<{ data: { songs: SongSummary[] } }>(`/public/songs`, { params }),
+  setPublic: (id: string, isPublic: boolean) =>
+    client.patch<{ data: { song: SongDetail } }>(`/songs/${id}/public`, { isPublic }),
   createPersonal: (input: SongMetadataInput & { title: string }) =>
     client.post<{ data: { song: SongDetail } }>(`/me/songs`, input),
   share: (id: string, bandId: string) =>

@@ -58,6 +58,12 @@ public class SongService {
         return toSummaries(songRepository.searchByOwner(userId, blankToNull(query)), userId, tag, sort);
     }
 
+    /** 探索:所有公開歌曲(任何登入者可見)。favorite 仍以目前使用者計算。 */
+    @Transactional(readOnly = true)
+    public List<SongSummary> listPublic(UUID userId, String query, String tag, String sort) {
+        return toSummaries(songRepository.searchPublic(blankToNull(query)), userId, tag, sort);
+    }
+
     // --- 建立 ---
 
     /** 在樂團裡建立歌曲:建立者為 owner,並直接分享到該樂團。 */
@@ -96,6 +102,15 @@ public class SongService {
         Song song = requireSong(songId);
         songAccess.requireOwner(song, userId);
         songBands.deleteBySongIdAndBandId(songId, bandId);
+        return detailFor(song, userId, Role.OWNER);
+    }
+
+    /** 設定/取消歌曲公開(僅建立者)。 */
+    @Transactional
+    public SongDetail setPublic(UUID songId, UUID userId, boolean isPublic) {
+        Song song = requireSong(songId);
+        songAccess.requireOwner(song, userId);
+        song.setPublic(isPublic);
         return detailFor(song, userId, Role.OWNER);
     }
 

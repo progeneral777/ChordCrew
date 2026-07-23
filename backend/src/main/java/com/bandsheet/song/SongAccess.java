@@ -56,9 +56,13 @@ public class SongAccess {
                 if (best == null || m.getRole().atLeast(best)) best = m.getRole();
             }
         }
-        if (best == null) {
-            throw AppException.notFound("SONG_NOT_FOUND", "找不到歌曲");
+        if (best != null) {
+            return best;
         }
-        return best;
+        // 公開歌曲:非 owner、非分享樂團成員的登入者也能檢視(唯讀)。
+        if (song.isPublic()) {
+            return Role.VIEWER;
+        }
+        throw AppException.notFound("SONG_NOT_FOUND", "找不到歌曲");
     }
 }

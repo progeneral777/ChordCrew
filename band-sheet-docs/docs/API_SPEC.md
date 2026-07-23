@@ -34,8 +34,9 @@ Base URL: `/api`
 ## Songs
 歌曲屬於建立者(owner),可分享到零到多個樂團(見 DATA_MODEL 的 `song_bands`)。
 `SongSummary`/`SongDetail` 皆帶 `bandIds`(已分享樂團,可多個;空 = 個人歌曲)、
-`favorite`(目前使用者是否加入最愛);`SongDetail` 另含 `ownerId`。
-存取權:歌曲屬於某樂團時沿用樂團角色;個人歌曲(未分享)僅建立者可存取。
+`favorite`(目前使用者是否加入最愛)、`isPublic`(是否公開);`SongDetail` 另含 `ownerId`。
+存取權:歌曲屬於某樂團時沿用樂團角色;個人歌曲(未分享)僅建立者可存取;
+`isPublic=true` 的歌曲任何登入者皆可**檢視**(effective role = VIEWER),但只有 owner 能改公開狀態。
 
 | Method | Path | 說明 |
 |---|---|---|
@@ -43,7 +44,9 @@ Base URL: `/api`
 | POST | /bands/{bandId}/songs | 在樂團建立歌曲,建立者為 owner 並直接分享到該團 (EDITOR+) |
 | GET | /me/songs?query=&tag=&sort=updated | 我的歌曲庫(owner 為我,含已分享出去的) |
 | POST | /me/songs | 建立個人歌曲(尚未分享到任何樂團) |
-| GET | /songs/{id} | 詳情含 content、revision、bandIds、favorite、ownerId |
+| GET | /public/songs?query=&tag=&sort=updated | 探索:所有公開歌曲(任何登入者) |
+| PATCH | /songs/{id}/public | { isPublic } 設定/取消公開(僅 owner) |
+| GET | /songs/{id} | 詳情含 content、revision、bandIds、favorite、isPublic、ownerId |
 | PATCH | /songs/{id} | metadata 更新 (EDITOR+) |
 | PUT | /songs/{id}/content | { content, baseRevision } → 409 REVISION_CONFLICT 時回最新 { content, revision } |
 | POST | /songs/{id}/transpose | { semitones } 永久移調,改寫 content (EDITOR+) |

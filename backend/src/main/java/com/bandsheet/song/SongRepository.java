@@ -29,5 +29,13 @@ public interface SongRepository extends JpaRepository<Song, UUID> {
             """)
     List<Song> searchByOwner(@Param("ownerId") UUID ownerId, @Param("q") String q);
 
+    // 探索頁:所有公開歌曲。
+    @Query("""
+            select s from Song s
+            where s.isPublic = true and s.deletedAt is null
+              and (:q is null or lower(s.title) like lower(concat('%', cast(:q as string), '%')))
+            """)
+    List<Song> searchPublic(@Param("q") String q);
+
     Optional<Song> findByIdAndDeletedAtIsNull(UUID id);
 }

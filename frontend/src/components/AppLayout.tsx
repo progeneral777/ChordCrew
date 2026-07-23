@@ -37,6 +37,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                 <NavLink to="/playlists" className={navClass}>
                   我的歌單
                 </NavLink>
+                <NavLink to="/explore" className={navClass}>
+                  探索
+                </NavLink>
               </nav>
             )}
           </div>
@@ -71,6 +74,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             </NavLink>
             <NavLink to="/playlists" className={navClass}>
               我的歌單
+            </NavLink>
+            <NavLink to="/explore" className={navClass}>
+              探索
             </NavLink>
           </nav>
         )}

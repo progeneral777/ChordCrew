@@ -45,6 +45,7 @@ unique(band_id, user_id)
 | tags | text[] | |
 | content | text | ChordPro 全文(目前版本) |
 | revision | int default 0 | 即時協作用 |
+| is_public | boolean not null default false | 公開歌曲:任何登入者可檢視(唯讀);僅 owner 能切換 |
 | deleted_at | timestamptz nullable | 軟刪除 |
 
 歌曲屬於「建立者(owner)」;是否分享、分享到哪些樂團,記錄在 `song_bands`(見下)。

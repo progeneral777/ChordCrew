@@ -5,6 +5,7 @@ import RegisterPage from './features/auth/RegisterPage'
 import BandListPage from './features/bands/BandListPage'
 import BandDetailPage from './features/bands/BandDetailPage'
 import MySongsPage from './features/songs/MySongsPage'
+import PublicSongsPage from './features/songs/PublicSongsPage'
 import MyPlaylistsPage from './features/playlists/MyPlaylistsPage'
 import PlaylistDetailPage from './features/playlists/PlaylistDetailPage'
 import SettingsPage from './features/settings/SettingsPage'
@@ -81,6 +82,14 @@ export default function App() {
           element={
             <RequireAuth>
               <SongViewerPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/explore"
+          element={
+            <RequireAuth>
+              <PublicSongsPage />
             </RequireAuth>
           }
         />

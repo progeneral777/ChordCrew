@@ -206,6 +206,63 @@ class SongFlowTest {
                 .andExpect(jsonPath("$.data.songs.length()").value(1));
     }
 
+    @Test
+    @Order(8)
+    void publicSongIsVisibleToStrangers() throws Exception {
+        // 陌生人:非 owner、也不屬於任何分享樂團
+        register("stranger@band.dev", "Stranger");
+        String strangerToken = login("stranger@band.dev");
+
+        // owner 建立一首個人歌曲(預設非公開)
+        JsonNode created = json(mockMvc.perform(post("/api/me/songs")
+                        .header("Authorization", "Bearer " + editorToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"公開測試歌\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.song.isPublic").value(false))
+                .andReturn().getResponse().getContentAsString());
+        String pubId = created.get("data").get("song").get("id").asText();
+
+        // 尚未公開:陌生人看不到
+        mockMvc.perform(get("/api/songs/" + pubId)
+                        .header("Authorization", "Bearer " + strangerToken))
+                .andExpect(status().isNotFound());
+
+        // owner 設為公開
+        mockMvc.perform(patch("/api/songs/" + pubId + "/public")
+                        .header("Authorization", "Bearer " + editorToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"isPublic\":true}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.song.isPublic").value(true));
+
+        // 陌生人現在可檢視(唯讀 VIEWER),但不能編輯
+        mockMvc.perform(get("/api/songs/" + pubId)
+                        .header("Authorization", "Bearer " + strangerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.song.myRole").value("VIEWER"));
+
+        mockMvc.perform(patch("/api/songs/" + pubId)
+                        .header("Authorization", "Bearer " + strangerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"bpm\":100}"))
+                .andExpect(status().isForbidden());
+
+        // 只有 owner 能改公開狀態
+        mockMvc.perform(patch("/api/songs/" + pubId + "/public")
+                        .header("Authorization", "Bearer " + strangerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"isPublic\":false}"))
+                .andExpect(status().isNotFound());
+
+        // 探索列表:陌生人看得到這首公開歌
+        mockMvc.perform(get("/api/public/songs?query=公開測試歌")
+                        .header("Authorization", "Bearer " + strangerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.songs.length()").value(1))
+                .andExpect(jsonPath("$.data.songs[0].title").value("公開測試歌"));
+    }
+
     // --- helpers ---
 
     private void register(String email, String name) throws Exception {

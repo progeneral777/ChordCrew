@@ -119,6 +119,19 @@ export default function MySongsPage() {
     }
   }
 
+  const onTogglePublic = async (song: SongSummary) => {
+    const next = !song.isPublic
+    setError('')
+    // 樂觀更新
+    setSongs((prev) => prev.map((s) => (s.id === song.id ? { ...s, isPublic: next } : s)))
+    try {
+      await songsApi.setPublic(song.id, next)
+    } catch (err) {
+      setSongs((prev) => prev.map((s) => (s.id === song.id ? { ...s, isPublic: !next } : s)))
+      setError(apiErrorMessage(err, '更新公開狀態失敗'))
+    }
+  }
+
   return (
     <AppLayout>
       <div className="flex items-center justify-between mb-6">
@@ -211,7 +224,14 @@ export default function MySongsPage() {
                   className="min-w-0 flex-1 cursor-pointer"
                   onClick={() => navigate(`/songs/${song.id}`)}
                 >
-                  <p className="font-medium text-slate-900 truncate">{song.title}</p>
+                  <p className="font-medium text-slate-900 truncate flex items-center gap-1.5">
+                    <span className="truncate">{song.title}</span>
+                    {song.isPublic && (
+                      <span className="shrink-0 text-xs font-normal bg-sky-100 text-sky-700 rounded-full px-2 py-0.5">
+                        公開
+                      </span>
+                    )}
+                  </p>
                   <p className="text-sm text-slate-500 truncate">
                     {[song.artist, song.originalKey, song.bpm && `${song.bpm} BPM`]
                       .filter(Boolean)
@@ -286,6 +306,20 @@ export default function MySongsPage() {
                     )
                   })()}
 
+                {editMode && (
+                  <button
+                    type="button"
+                    onClick={() => void onTogglePublic(song)}
+                    className={`text-sm rounded-lg px-2.5 py-1 border transition ${
+                      song.isPublic
+                        ? 'bg-sky-50 text-sky-700 border-sky-200 hover:bg-sky-100'
+                        : 'bg-white text-slate-600 border-slate-200 hover:border-sky-400'
+                    }`}
+                    title={song.isPublic ? '目前公開,任何人可檢視' : '設為公開讓其他人可檢視'}
+                  >
+                    {song.isPublic ? '取消公開' : '設為公開'}
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => navigate(`/songs/${song.id}/view`)}

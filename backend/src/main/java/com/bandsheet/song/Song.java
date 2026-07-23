@@ -41,6 +41,10 @@ public class Song extends BaseEntity {
     @Column(nullable = false)
     private int revision;
 
+    // 公開歌曲:任何登入者可檢視(唯讀);只有 owner 能切換。
+    @Column(name = "is_public", nullable = false)
+    private boolean isPublic;
+
     @Column(name = "deleted_at")
     private Instant deletedAt;
 
@@ -70,6 +74,8 @@ public class Song extends BaseEntity {
     public void setContent(String content) { this.content = content; }
     public int getRevision() { return revision; }
     public void bumpRevision() { this.revision++; }
+    public boolean isPublic() { return isPublic; }
+    public void setPublic(boolean isPublic) { this.isPublic = isPublic; }
     public Instant getDeletedAt() { return deletedAt; }
     public void softDelete() { this.deletedAt = Instant.now(); }
 }
