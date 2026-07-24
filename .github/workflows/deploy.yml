@@ -12,6 +12,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Load environment file
+        run: |
+          # Real secrets live outside the repo/workspace so actions/checkout's
+          # clean step never wipes them. See ~/projects/_infra/secrets/README
+          # (or SERVER.md) for how to edit this file.
+          cp /home/jimmy/projects/_infra/secrets/chordcrew.env .env
+
       - name: Deploy with Docker Compose
         run: |
           docker compose -f docker-compose.yml build --pull
